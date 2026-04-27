@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> erro </title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha512-DxV+EoADOkOygM4IR9yXP8Sb2qwgidEmeqAEmDKIOfPRQZOWbXCzLC6vjbZyy0vPisbH2SyW27+ddLVCN+OMzQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: "#f4f7ff",
+                            100: "#e7eeff",
+                            200: "#cfdcff",
+                            300: "#a9c1ff",
+                            400: "#789bff",
+                            500: "#4f73ff",
+                            600: "#3557eb",
+                            700: "#1e3aa8",
+                            800: "#162a78"
+                        }
+                    },
+                    boxShadow: {
+                        panel: "0 30px 80px rgba(30, 58, 168, 0.14)",
+                        field: "0 10px 30px rgba(15, 23, 42, 0.08)"
+                    }
+                }
+            }
+        };
+    </script>
+    <style type="text/tailwindcss">
+        @layer base {
+            body {
+                font-family: "Plus Jakarta Sans", sans-serif;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="mx-auto flex max-w-sm items-center gap-x-4 rounded-xl bg-white p-6  shadow-md dark:bg-red-100">
+        <i class="fa-solid fa-circle-xmark text-3xl text-red-600"></i>
+        <div>
+            <p class="text-zinc-900 dark:text-zinc-900 font-extrabold">ERRO: HORÁRIO INDISPONÍVEL.</p>
+        </div>
+
+
+</body>
+</html>
