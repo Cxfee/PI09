@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SUCESSO </title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: "#f4f7ff",
+                            100: "#e7eeff",
+                            200: "#cfdcff",
+                            300: "#a9c1ff",
+                            400: "#789bff",
+                            500: "#4f73ff",
+                            600: "#3557eb",
+                            700: "#1e3aa8",
+                            800: "#162a78"
+                        }
+                    },
+                    boxShadow: {
+                        panel: "0 30px 80px rgba(30, 58, 168, 0.14)",
+                        field: "0 10px 30px rgba(15, 23, 42, 0.08)"
+                    }
+                }
+            }
+        };
+    </script>
+    <style type="text/tailwindcss">
+        @layer base {
+            body {
+                font-family: "Plus Jakarta Sans", sans-serif;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="mx-auto max-w-lg items-center gap-x-4 rounded-xl bg-white p-6 shadow-md outline outline-black/5 ">
+    <h2 class="text-2xl sm: text 2xl font-extrabold text-sky-950 "> MINHAS RESERVAS </h2>
+<table class="table-fixed border-collapse ">
+  <thead class="">
+    <tr class="">
+      <th class="p-3 ">Sala</th>
+      <th class="">Data</th>
+      <th class="">Horário</th>
+      <th class=>Ação</th>
+    </tr>
+  </thead>
+  <tbody class="font-semibold">
+    <tr>
+      <td class="p-2">Sala de estudo 3A</td>
+      <td class=" p-2 ">13 de abr </td>
+      <td class="p-2">22:00</td>
+      <td class="p-2"> <button class=" font-bold outline rounded-md p-1"> Cancelar Reserva</button></td>
+    </tr>
+    
+    <tr>
+      <td class=" p-2">Sala de estudo 3A</td>
+      <td class="p-2">13 de abr </td>
+      <td class="p-2">22:00</td>
+      <td class="p-2"> <button class=" font-bold outline rounded-md p-1"> Cancelar Reserva</button></td>
+    </tr>
+    
+    <tr>
+      <td class="p-2">Sala de estudo 3A</td>
+      <td class="p-2">13 de abr </td>
+      <td class="p-2">22:00</td>
+      <td class="p-2 "> <button class=" font-bold outline rounded-md p-1"> Cancelar Reserva</button></td>
+    </tr>
+    
+  </tbody>
+</table>
+</div>
+
+
+                          
+</body>
+</html>
