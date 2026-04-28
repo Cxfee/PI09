@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SUCESSO </title>
+    <title>RoomEasy | Componente Minhas Reservas</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -26,8 +26,7 @@
                         }
                     },
                     boxShadow: {
-                        panel: "0 30px 80px rgba(30, 58, 168, 0.14)",
-                        field: "0 10px 30px rgba(15, 23, 42, 0.08)"
+                        soft: "0 12px 26px rgba(15, 23, 42, 0.10)"
                     }
                 }
             }
@@ -41,45 +40,68 @@
         }
     </style>
 </head>
-<body>
-<div class="mx-auto max-w-lg items-center gap-x-4 rounded-xl bg-white p-6 shadow-md outline outline-black/5 ">
-    <h2 class="text-2xl sm: text 2xl font-extrabold text-sky-950 "> MINHAS RESERVAS </h2>
-<table class="table-fixed border-collapse ">
-  <thead class="">
-    <tr class="">
-      <th class="p-3 ">Sala</th>
-      <th class="">Data</th>
-      <th class="">Horário</th>
-      <th class=>Ação</th>
-    </tr>
-  </thead>
-  <tbody class="font-semibold">
-    <tr>
-      <td class="p-2">Sala de estudo 3A</td>
-      <td class=" p-2 ">13 de abr </td>
-      <td class="p-2">22:00</td>
-      <td class="p-2"> <button class=" font-bold outline rounded-md p-1"> Cancelar Reserva</button></td>
-    </tr>
-    
-    <tr>
-      <td class=" p-2">Sala de estudo 3A</td>
-      <td class="p-2">13 de abr </td>
-      <td class="p-2">22:00</td>
-      <td class="p-2"> <button class=" font-bold outline rounded-md p-1"> Cancelar Reserva</button></td>
-    </tr>
-    
-    <tr>
-      <td class="p-2">Sala de estudo 3A</td>
-      <td class="p-2">13 de abr </td>
-      <td class="p-2">22:00</td>
-      <td class="p-2 "> <button class=" font-bold outline rounded-md p-1"> Cancelar Reserva</button></td>
-    </tr>
-    
-  </tbody>
-</table>
-</div>
+<body class="min-h-screen bg-[radial-gradient(circle_at_top,_#edf4ff_0,_#f7faff_35%,_#eff5ff_100%)] px-4 py-10 text-slate-900">
+    <main class="mx-auto max-w-5xl">
+        <section class="rounded-[28px] border border-white/80 bg-white p-5 shadow-soft sm:p-6">
+            <div class="mb-5">
+                <p class="text-xs font-extrabold uppercase tracking-[0.16em] text-brand-600">
+                    Pr&eacute;via do componente
+                </p>
+                <h1 class="mt-3 text-3xl font-extrabold tracking-tight text-slate-950">
+                    Minhas Reservas
+                </h1>
+                <p class="mt-2 text-sm leading-6 text-slate-500">
+                    Estrutura isolada da tabela lateral usada no painel do estudante.
+                </p>
+            </div>
 
-
-                          
+            <div class="overflow-hidden rounded-[20px] border border-slate-200">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-slate-200 text-left">
+                        <thead class="bg-slate-50">
+                            <tr class="text-[0.7rem] font-extrabold uppercase tracking-[0.12em] text-slate-600">
+                                <th class="px-3 py-3">Sala</th>
+                                <th class="px-3 py-3">Data</th>
+                                <th class="px-3 py-3">Hor&aacute;rio</th>
+                                <th class="px-3 py-3">A&ccedil;&atilde;o</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 bg-white text-sm text-slate-700">
+                            <tr>
+                                <td class="px-3 py-4 font-semibold">Sala de Estudos 3A</td>
+                                <td class="px-3 py-4">13 abr</td>
+                                <td class="px-3 py-4">22:00</td>
+                                <td class="px-3 py-4">
+                                    <button class="whitespace-nowrap rounded-lg border border-slate-300 px-2.5 py-1.5 text-[0.68rem] font-extrabold uppercase tracking-wide text-slate-700 transition hover:border-rose-300 hover:text-rose-600">
+                                        Cancelar Reserva
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-3 py-4 font-semibold">Laborat&oacute;rio de Biologia 2</td>
+                                <td class="px-3 py-4">15 abr</td>
+                                <td class="px-3 py-4">14:00</td>
+                                <td class="px-3 py-4">
+                                    <button class="whitespace-nowrap rounded-lg border border-slate-300 px-2.5 py-1.5 text-[0.68rem] font-extrabold uppercase tracking-wide text-slate-700 transition hover:border-rose-300 hover:text-rose-600">
+                                        Cancelar Reserva
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-3 py-4 font-semibold">Sala de Reuni&atilde;o 1C</td>
+                                <td class="px-3 py-4">18 abr</td>
+                                <td class="px-3 py-4">10:00</td>
+                                <td class="px-3 py-4">
+                                    <button class="whitespace-nowrap rounded-lg border border-slate-300 px-2.5 py-1.5 text-[0.68rem] font-extrabold uppercase tracking-wide text-slate-700 transition hover:border-rose-300 hover:text-rose-600">
+                                        Cancelar Reserva
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
 </body>
 </html>
