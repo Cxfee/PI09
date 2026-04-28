@@ -195,11 +195,21 @@
                                         Filtrar
                                     </button>
                                 </form>
+
+                                <div class="mt-4 flex justify-end">
+                                    <button
+                                        id="clearFiltersButton"
+                                        type="button"
+                                        class="text-sm font-semibold text-slate-500 transition hover:text-brand-700"
+                                    >
+                                        Limpar filtros
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="grid gap-3 xl:pt-5">
-                            <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 shadow-soft">
+                        <div id="alertsStack" class="grid gap-3 xl:pt-5">
+                            <div id="successAlert" class="hidden rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 shadow-soft">
                                 <div class="flex items-start gap-3">
                                     <span class="mt-0.5 inline-flex h-7 w-7 items-center justify-center rounded-full bg-emerald-600/10 text-emerald-700">
                                         <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -207,17 +217,17 @@
                                         </svg>
                                     </span>
                                     <div>
-                                        <p class="text-xs font-extrabold uppercase tracking-wide text-slate-900">
+                                        <p id="successAlertTitle" class="text-xs font-extrabold uppercase tracking-wide text-slate-900">
                                             Reserva efetuada com sucesso!
                                         </p>
-                                        <p class="mt-1 text-xs leading-5 text-slate-600">
+                                        <p id="successAlertMessage" class="mt-1 text-xs leading-5 text-slate-600">
                                             Agendamento confirmado para a sala selecionada.
                                         </p>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 shadow-soft">
+                            <div id="errorAlert" class="hidden rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 shadow-soft">
                                 <div class="flex items-start gap-3">
                                     <span class="mt-0.5 inline-flex h-7 w-7 items-center justify-center rounded-full bg-rose-600/10 text-rose-700">
                                         <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -226,10 +236,10 @@
                                         </svg>
                                     </span>
                                     <div>
-                                        <p class="text-xs font-extrabold uppercase tracking-wide text-slate-900">
+                                        <p id="errorAlertTitle" class="text-xs font-extrabold uppercase tracking-wide text-slate-900">
                                             Erro: horario indisponivel.
                                         </p>
-                                        <p class="mt-1 text-xs leading-5 text-slate-600">
+                                        <p id="errorAlertMessage" class="mt-1 text-xs leading-5 text-slate-600">
                                             Escolha outro horario ou tente uma sala diferente.
                                         </p>
                                     </div>
@@ -272,6 +282,9 @@
                             <h2 class="text-[1.65rem] font-extrabold tracking-tight text-slate-950">
                                 MINHAS RESERVAS
                             </h2>
+                            <p id="reservationsSummary" class="mt-1 text-sm text-slate-500">
+                                Gerencie suas reservas ativas no painel.
+                            </p>
                         </div>
 
                         <div class="overflow-hidden rounded-[20px] border border-slate-200">
@@ -285,40 +298,18 @@
                                             <th class="px-3 py-3">Acao</th>
                                         </tr>
                                     </thead>
-                                    <tbody class="divide-y divide-slate-100 bg-white text-sm text-slate-700">
-                                        <tr>
-                                            <td class="px-3 py-4 font-semibold">Sala de Estudo 3A</td>
-                                            <td class="px-3 py-4">13 abr</td>
-                                            <td class="px-3 py-4">22:00</td>
-                                            <td class="px-3 py-4">
-                                                <button type="button" class="whitespace-nowrap rounded-lg border border-slate-300 px-2.5 py-1.5 text-[0.68rem] font-extrabold uppercase tracking-wide text-slate-700 transition hover:border-rose-300 hover:text-rose-600">
-                                                    Cancelar Reserva
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="px-3 py-4 font-semibold">Laboratorio de Biologia 2</td>
-                                            <td class="px-3 py-4">15 abr</td>
-                                            <td class="px-3 py-4">14:00</td>
-                                            <td class="px-3 py-4">
-                                                <button type="button" class="whitespace-nowrap rounded-lg border border-slate-300 px-2.5 py-1.5 text-[0.68rem] font-extrabold uppercase tracking-wide text-slate-700 transition hover:border-rose-300 hover:text-rose-600">
-                                                    Cancelar Reserva
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="px-3 py-4 font-semibold">Sala de Reuniao 1C</td>
-                                            <td class="px-3 py-4">18 abr</td>
-                                            <td class="px-3 py-4">10:00</td>
-                                            <td class="px-3 py-4">
-                                                <button type="button" class="whitespace-nowrap rounded-lg border border-slate-300 px-2.5 py-1.5 text-[0.68rem] font-extrabold uppercase tracking-wide text-slate-700 transition hover:border-rose-300 hover:text-rose-600">
-                                                    Cancelar Reserva
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    </tbody>
+                                    <tbody id="reservationsTableBody" class="divide-y divide-slate-100 bg-white text-sm text-slate-700"></tbody>
                                 </table>
                             </div>
+                        </div>
+
+                        <div id="reservationsEmpty" class="hidden rounded-[20px] border border-dashed border-slate-300 bg-slate-50 px-6 py-8 text-center">
+                            <p class="text-base font-bold text-slate-700">
+                                Voce ainda nao fez reservas.
+                            </p>
+                            <p class="mt-2 text-sm text-slate-500">
+                                Reserve uma sala para acompanhar os horarios aqui.
+                            </p>
                         </div>
                     </aside>
                 </div>
@@ -474,6 +465,30 @@
             `
         };
 
+        let reservations = [
+            {
+                id: "reserva-1",
+                roomId: "sala-3a",
+                roomName: "Sala de Estudo 3A",
+                date: "2026-04-13",
+                time: "22:00"
+            },
+            {
+                id: "reserva-2",
+                roomId: "bio-2",
+                roomName: "Laboratorio de Biologia 2",
+                date: "2026-04-15",
+                time: "14:00"
+            },
+            {
+                id: "reserva-3",
+                roomId: "reuniao-1c",
+                roomName: "Sala de Reuniao 1C",
+                date: "2026-04-18",
+                time: "10:00"
+            }
+        ];
+
         const roomsGrid = document.getElementById("roomsGrid");
         const roomsCount = document.getElementById("roomsCount");
         const roomsEmpty = document.getElementById("roomsEmpty");
@@ -484,9 +499,40 @@
         const capacityFilter = document.getElementById("capacityFilter");
         const startTimeFilter = document.getElementById("startTimeFilter");
         const endTimeFilter = document.getElementById("endTimeFilter");
+        const dateFilter = document.getElementById("dateFilter");
+        const reservationsTableBody = document.getElementById("reservationsTableBody");
+        const reservationsSummary = document.getElementById("reservationsSummary");
+        const reservationsEmpty = document.getElementById("reservationsEmpty");
+        const clearFiltersButton = document.getElementById("clearFiltersButton");
+        const successAlert = document.getElementById("successAlert");
+        const successAlertTitle = document.getElementById("successAlertTitle");
+        const successAlertMessage = document.getElementById("successAlertMessage");
+        const errorAlert = document.getElementById("errorAlert");
+        const errorAlertTitle = document.getElementById("errorAlertTitle");
+        const errorAlertMessage = document.getElementById("errorAlertMessage");
+        let alertTimeoutId = null;
 
         function formatSchedule(startTime, endTime) {
             return `${startTime} - ${endTime}`;
+        }
+
+        function getRequestedDate() {
+            return dateFilter?.value || "2026-04-28";
+        }
+
+        function getRequestedTime(room) {
+            return startTimeFilter?.value || room.startTime;
+        }
+
+        function formatShortDate(date) {
+            if (!date) {
+                return "--";
+            }
+
+            const [year, month, day] = date.split("-").map(Number);
+            const months = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+
+            return `${String(day).padStart(2, "0")} ${months[(month || 1) - 1]}`;
         }
 
         function timeToMinutes(time) {
@@ -530,6 +576,55 @@
             roomsSummary.textContent = `Mostrando ${filteredCount} de ${totalCount} salas apos aplicar os filtros.`;
         }
 
+        function isRoomReserved(roomId, date, time) {
+            return reservations.some((reservation) => (
+                reservation.roomId === roomId &&
+                reservation.date === date &&
+                reservation.time === time
+            ));
+        }
+
+        function updateReservationsSummary() {
+            if (!reservationsSummary) {
+                return;
+            }
+
+            if (!reservations.length) {
+                reservationsSummary.textContent = "Voce nao possui reservas ativas no momento.";
+                return;
+            }
+
+            reservationsSummary.textContent = `${reservations.length} ${reservations.length === 1 ? "reserva ativa" : "reservas ativas"} no painel.`;
+        }
+
+        function showAlert(type, title, message) {
+            if (!successAlert || !errorAlert || !successAlertTitle || !successAlertMessage || !errorAlertTitle || !errorAlertMessage) {
+                return;
+            }
+
+            if (alertTimeoutId) {
+                clearTimeout(alertTimeoutId);
+            }
+
+            successAlert.classList.add("hidden");
+            errorAlert.classList.add("hidden");
+
+            if (type === "success") {
+                successAlertTitle.textContent = title;
+                successAlertMessage.textContent = message;
+                successAlert.classList.remove("hidden");
+            } else {
+                errorAlertTitle.textContent = title;
+                errorAlertMessage.textContent = message;
+                errorAlert.classList.remove("hidden");
+            }
+
+            alertTimeoutId = setTimeout(() => {
+                successAlert.classList.add("hidden");
+                errorAlert.classList.add("hidden");
+            }, 4200);
+        }
+
         function getRoomIllustration(illustrationKey) {
             return roomIllustrations[illustrationKey] || roomIllustrations.study;
         }
@@ -551,6 +646,19 @@
             roomsEmpty.classList.add("hidden");
 
             roomsGrid.innerHTML = items.map((room) => `
+                ${(() => {
+                    const requestedDate = getRequestedDate();
+                    const requestedTime = getRequestedTime(room);
+                    const reserved = isRoomReserved(room.id, requestedDate, requestedTime);
+                    const buttonClass = reserved
+                        ? "mt-3 w-full rounded-xl bg-rose-100 px-4 py-3 text-sm font-bold uppercase tracking-wide text-rose-700 transition hover:bg-rose-200"
+                        : "mt-3 w-full rounded-xl bg-brand-600 px-4 py-3 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-brand-700";
+                    const buttonLabel = reserved ? "Horario indisponivel" : "Reservar Agora";
+                    const statusMarkup = reserved
+                        ? `<p class="mt-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-bold uppercase tracking-wide text-rose-700">Ja existe uma reserva para ${formatShortDate(requestedDate)} as ${requestedTime}</p>`
+                        : "";
+
+                    return `
                 <article class="overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-field">
                     <div class="border-b border-slate-100 bg-[linear-gradient(180deg,_#f6faff_0%,_#e8f1ff_100%)] px-4 pt-4">
                         <div class="overflow-hidden rounded-[16px] border border-slate-200 bg-white">
@@ -562,16 +670,110 @@
                         <p class="text-sm text-slate-700">Tipo: ${room.type}</p>
                         <p class="text-sm text-slate-700">Capacidade: ${room.capacity}</p>
                         <p class="text-sm text-slate-700">Horario Disponivel: ${formatSchedule(room.startTime, room.endTime)}</p>
+                        ${statusMarkup}
                         <button
                             type="button"
                             data-room-id="${room.id}"
-                            class="mt-3 w-full rounded-xl bg-brand-600 px-4 py-3 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-brand-700"
+                            class="${buttonClass}"
                         >
-                            Reservar Agora
+                            ${buttonLabel}
                         </button>
                     </div>
                 </article>
+                    `;
+                })()}
             `).join("");
+        }
+
+        function renderReservations() {
+            if (!reservationsTableBody || !reservationsEmpty) {
+                return;
+            }
+
+            updateReservationsSummary();
+
+            if (!reservations.length) {
+                reservationsTableBody.innerHTML = "";
+                reservationsEmpty.classList.remove("hidden");
+                return;
+            }
+
+            reservationsEmpty.classList.add("hidden");
+
+            reservationsTableBody.innerHTML = reservations.map((reservation) => `
+                <tr>
+                    <td class="px-3 py-4 font-semibold">${reservation.roomName}</td>
+                    <td class="px-3 py-4">${formatShortDate(reservation.date)}</td>
+                    <td class="px-3 py-4">${reservation.time}</td>
+                    <td class="px-3 py-4">
+                        <button
+                            type="button"
+                            data-reservation-id="${reservation.id}"
+                            class="whitespace-nowrap rounded-lg border border-slate-300 px-2.5 py-1.5 text-[0.68rem] font-extrabold uppercase tracking-wide text-slate-700 transition hover:border-rose-300 hover:text-rose-600"
+                        >
+                            Cancelar Reserva
+                        </button>
+                    </td>
+                </tr>
+            `).join("");
+        }
+
+        function buildReservationFromRoom(room) {
+            const selectedDate = getRequestedDate();
+            const selectedTime = getRequestedTime(room);
+
+            return {
+                id: `reserva-${Date.now()}`,
+                roomId: room.id,
+                roomName: room.name,
+                date: selectedDate,
+                time: selectedTime
+            };
+        }
+
+        function handleReserveRoom(roomId) {
+            const room = rooms.find((item) => item.id === roomId);
+
+            if (!room) {
+                return;
+            }
+
+            const nextReservation = buildReservationFromRoom(room);
+
+            if (isRoomReserved(nextReservation.roomId, nextReservation.date, nextReservation.time)) {
+                showAlert(
+                    "error",
+                    "Erro: horario indisponivel.",
+                    `${room.name} ja esta reservada em ${formatShortDate(nextReservation.date)} as ${nextReservation.time}.`
+                );
+                return;
+            }
+
+            reservations = [nextReservation, ...reservations];
+            renderReservations();
+            applyFilters();
+            showAlert(
+                "success",
+                "Reserva efetuada com sucesso!",
+                `${room.name} foi reservada para ${formatShortDate(nextReservation.date)} as ${nextReservation.time}.`
+            );
+        }
+
+        function handleCancelReservation(reservationId) {
+            const reservation = reservations.find((item) => item.id === reservationId);
+
+            if (!reservation) {
+                return;
+            }
+
+            reservations = reservations.filter((item) => item.id !== reservationId);
+            renderReservations();
+            applyFilters();
+            showAlert(
+                "success",
+                "Reserva cancelada com sucesso!",
+                `${reservation.roomName} foi removida das suas reservas.`
+            );
         }
 
         function getFilteredRooms() {
@@ -623,7 +825,49 @@
             searchInput.addEventListener("input", applyFilters);
         }
 
+        if (clearFiltersButton) {
+            clearFiltersButton.addEventListener("click", function () {
+                if (filtersForm) {
+                    filtersForm.reset();
+                }
+
+                populateTimeSelect(startTimeFilter, "", "Horario inicial");
+                populateTimeSelect(endTimeFilter, "", "Horario final");
+
+                if (searchInput) {
+                    searchInput.value = "";
+                }
+
+                applyFilters();
+            });
+        }
+
+        if (roomsGrid) {
+            roomsGrid.addEventListener("click", function (event) {
+                const target = event.target.closest("[data-room-id]");
+
+                if (!target) {
+                    return;
+                }
+
+                handleReserveRoom(target.dataset.roomId);
+            });
+        }
+
+        if (reservationsTableBody) {
+            reservationsTableBody.addEventListener("click", function (event) {
+                const target = event.target.closest("[data-reservation-id]");
+
+                if (!target) {
+                    return;
+                }
+
+                handleCancelReservation(target.dataset.reservationId);
+            });
+        }
+
         renderRooms();
+        renderReservations();
     </script>
 </body>
 </html>
