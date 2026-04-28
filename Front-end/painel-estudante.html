@@ -212,6 +212,16 @@
                                         Limpar filtros
                                     </button>
                                 </div>
+
+                                <div id="activeFiltersSummary" class="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                                    <p class="text-[0.7rem] font-extrabold uppercase tracking-[0.12em] text-slate-500">
+                                        Filtros ativos
+                                    </p>
+                                    <div id="activeFiltersChips" class="mt-3 flex flex-wrap gap-2"></div>
+                                    <p id="activeFiltersText" class="mt-3 text-sm text-slate-500">
+                                        Nenhum filtro adicional aplicado.
+                                    </p>
+                                </div>
                             </div>
                         </div>
 
@@ -300,10 +310,10 @@
                         <div id="roomsGrid" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3"></div>
 
                         <div id="roomsEmpty" class="hidden rounded-[22px] border border-dashed border-slate-300 bg-slate-50 px-6 py-12 text-center">
-                            <p class="text-lg font-bold text-slate-700">
+                            <p id="roomsEmptyTitle" class="text-lg font-bold text-slate-700">
                                 Nenhuma sala encontrada.
                             </p>
-                            <p class="mt-2 text-sm text-slate-500">
+                            <p id="roomsEmptyMessage" class="mt-2 text-sm text-slate-500">
                                 Quando os filtros forem aplicados, os resultados aparecerao aqui.
                             </p>
                         </div>
@@ -545,10 +555,14 @@
         const roomsGrid = document.getElementById("roomsGrid");
         const roomsCount = document.getElementById("roomsCount");
         const roomsEmpty = document.getElementById("roomsEmpty");
+        const roomsEmptyTitle = document.getElementById("roomsEmptyTitle");
+        const roomsEmptyMessage = document.getElementById("roomsEmptyMessage");
         const roomsSummary = document.getElementById("roomsSummary");
         const requestedSlotSummary = document.getElementById("requestedSlotSummary");
         const searchInput = document.getElementById("searchInput");
         const filtersForm = document.getElementById("filtersForm");
+        const activeFiltersChips = document.getElementById("activeFiltersChips");
+        const activeFiltersText = document.getElementById("activeFiltersText");
         const roomTypeFilter = document.getElementById("roomTypeFilter");
         const capacityFilter = document.getElementById("capacityFilter");
         const startTimeFilter = document.getElementById("startTimeFilter");
@@ -651,6 +665,17 @@
             return `${String(day).padStart(2, "0")} ${months[(month || 1) - 1]}`;
         }
 
+        function formatLongDate(date) {
+            if (!date) {
+                return "--";
+            }
+
+            const [year, month, day] = date.split("-").map(Number);
+            const months = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+
+            return `${String(day).padStart(2, "0")} ${months[(month || 1) - 1]} ${year}`;
+        }
+
         function timeToMinutes(time) {
             const [hours, minutes] = time.split(":").map(Number);
             return (hours * 60) + minutes;
@@ -662,6 +687,17 @@
                 .replace(/[\u0300-\u036f]/g, "")
                 .toLowerCase()
                 .trim();
+        }
+
+        function getCurrentFiltersState() {
+            return {
+                searchTerm: searchInput?.value?.trim() || "",
+                selectedType: roomTypeFilter?.value || "Todos",
+                minimumCapacity: Number(capacityFilter?.value || 0),
+                selectedStart: startTimeFilter?.value || "",
+                selectedEnd: endTimeFilter?.value || "",
+                selectedDate: getRequestedDate()
+            };
         }
 
         function populateTimeSelect(selectElement, selectedValue, placeholderLabel) {
@@ -692,6 +728,60 @@
             roomsSummary.textContent = `Mostrando ${filteredCount} de ${totalCount} salas apos aplicar os filtros.`;
         }
 
+        function updateRoomsEmptyState(invalidRange) {
+            if (!roomsEmptyTitle || !roomsEmptyMessage) {
+                return;
+            }
+
+            if (invalidRange) {
+                roomsEmptyTitle.textContent = "Intervalo de horario invalido.";
+                roomsEmptyMessage.textContent = "Escolha um horario inicial menor ou igual ao horario final para continuar.";
+                return;
+            }
+
+            roomsEmptyTitle.textContent = "Nenhuma sala encontrada.";
+            roomsEmptyMessage.textContent = "Tente ajustar os filtros para visualizar outras opcoes disponiveis.";
+        }
+
+        function updateActiveFiltersSummary(filters) {
+            if (!activeFiltersChips || !activeFiltersText) {
+                return;
+            }
+
+            const chips = [
+                `Data: ${formatLongDate(filters.selectedDate)}`
+            ];
+
+            if (filters.searchTerm) {
+                chips.push(`Busca: ${filters.searchTerm}`);
+            }
+
+            if (filters.selectedType !== "Todos") {
+                chips.push(`Tipo: ${filters.selectedType}`);
+            }
+
+            if (filters.minimumCapacity) {
+                chips.push(`Capacidade: ${filters.minimumCapacity}+`);
+            }
+
+            if (filters.selectedStart || filters.selectedEnd) {
+                chips.push(`Horario: ${filters.selectedStart || "--:--"} - ${filters.selectedEnd || "--:--"}`);
+            }
+
+            activeFiltersChips.innerHTML = chips.map((label) => `
+                <span class="rounded-full bg-white px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-brand-700 ring-1 ring-slate-200">
+                    ${label}
+                </span>
+            `).join("");
+
+            if (chips.length === 1) {
+                activeFiltersText.textContent = "Exibindo a data selecionada com os demais filtros em estado padrao.";
+                return;
+            }
+
+            activeFiltersText.textContent = `${chips.length} filtros visiveis no painel.`;
+        }
+
         function updateRequestedSlotSummary() {
             if (!requestedSlotSummary) {
                 return;
@@ -714,6 +804,13 @@
         function getReservationForSlot(roomId, date, time) {
             return reservations.find((reservation) => (
                 reservation.roomId === roomId &&
+                reservation.date === date &&
+                reservation.time === time
+            )) || null;
+        }
+
+        function getReservationForTimeslot(date, time) {
+            return reservations.find((reservation) => (
                 reservation.date === date &&
                 reservation.time === time
             )) || null;
@@ -801,7 +898,7 @@
             return roomIllustrations[illustrationKey] || roomIllustrations.study;
         }
 
-        function renderRooms(items = rooms) {
+        function renderRooms(items = rooms, options = {}) {
             if (!roomsGrid || !roomsCount || !roomsEmpty) {
                 return;
             }
@@ -809,6 +906,7 @@
             roomsCount.textContent = `${items.length} ${items.length === 1 ? "resultado" : "resultados"}`;
             updateRoomsSummary(items.length, rooms.length);
             updateRequestedSlotSummary();
+            updateRoomsEmptyState(Boolean(options.invalidRange));
 
             if (!items.length) {
                 roomsGrid.innerHTML = "";
@@ -823,14 +921,24 @@
                     const requestedDate = getRequestedDate();
                     const requestedTime = getRequestedTime(room);
                     const existingReservation = getReservationForSlot(room.id, requestedDate, requestedTime);
-                    const reserved = Boolean(existingReservation);
-                    const buttonClass = reserved
+                    const conflictingReservation = getReservationForTimeslot(requestedDate, requestedTime);
+                    const reservedByCurrentRoom = Boolean(existingReservation);
+                    const hasConflictingReservation = Boolean(conflictingReservation) && !reservedByCurrentRoom;
+                    const buttonClass = reservedByCurrentRoom
                         ? "mt-3 w-full cursor-not-allowed rounded-xl bg-emerald-100 px-4 py-3 text-sm font-bold uppercase tracking-wide text-emerald-700 opacity-90"
-                        : "mt-3 w-full rounded-xl bg-brand-600 px-4 py-3 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-brand-700";
-                    const buttonLabel = reserved ? "Reservado" : "Reservar Agora";
-                    const statusMarkup = reserved
+                        : hasConflictingReservation
+                            ? "mt-3 w-full cursor-not-allowed rounded-xl bg-rose-100 px-4 py-3 text-sm font-bold uppercase tracking-wide text-rose-700 opacity-90"
+                            : "mt-3 w-full rounded-xl bg-brand-600 px-4 py-3 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-brand-700";
+                    const buttonLabel = reservedByCurrentRoom
+                        ? "Reservado"
+                        : hasConflictingReservation
+                            ? "Horario ocupado"
+                            : "Reservar Agora";
+                    const statusMarkup = reservedByCurrentRoom
                         ? `<p class="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-bold uppercase tracking-wide text-emerald-700">Reservado por voce para ${formatShortDate(existingReservation.date)} as ${existingReservation.time}</p>`
-                        : "";
+                        : hasConflictingReservation
+                            ? `<p class="mt-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-bold uppercase tracking-wide text-rose-700">Voce ja possui uma reserva em ${conflictingReservation.roomName} para ${formatShortDate(conflictingReservation.date)} as ${conflictingReservation.time}</p>`
+                            : "";
 
                     return `
                 <article class="overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-field">
@@ -848,7 +956,7 @@
                         <button
                             type="button"
                             data-room-id="${room.id}"
-                            ${reserved ? "disabled aria-disabled=\"true\"" : ""}
+                            ${(reservedByCurrentRoom || hasConflictingReservation) ? "disabled aria-disabled=\"true\"" : ""}
                             class="${buttonClass}"
                         >
                             ${buttonLabel}
@@ -915,12 +1023,16 @@
             }
 
             const nextReservation = buildReservationFromRoom(room);
+            const conflictingReservation = getReservationForTimeslot(nextReservation.date, nextReservation.time);
 
-            if (isRoomReserved(nextReservation.roomId, nextReservation.date, nextReservation.time)) {
+            if (conflictingReservation) {
+                const isSameRoom = conflictingReservation.roomId === nextReservation.roomId;
                 showAlert(
                     "error",
                     "Erro: horario indisponivel.",
-                    `${room.name} ja esta reservada em ${formatShortDate(nextReservation.date)} as ${nextReservation.time}.`
+                    isSameRoom
+                        ? `${room.name} ja esta reservada em ${formatShortDate(nextReservation.date)} as ${nextReservation.time}.`
+                        : `Voce ja possui uma reserva em ${conflictingReservation.roomName} para ${formatShortDate(nextReservation.date)} as ${nextReservation.time}.`
                 );
                 return;
             }
@@ -971,15 +1083,25 @@
         }
 
         function getFilteredRooms() {
-            const searchTerm = normalizeText(searchInput?.value || "");
-            const selectedType = roomTypeFilter?.value || "Todos";
-            const minimumCapacity = Number(capacityFilter?.value || 0);
-            const selectedStart = startTimeFilter?.value || "";
-            const selectedEnd = endTimeFilter?.value || "";
+            const filters = getCurrentFiltersState();
+            const searchTerm = normalizeText(filters.searchTerm);
+            const selectedType = filters.selectedType;
+            const minimumCapacity = filters.minimumCapacity;
+            const selectedStart = filters.selectedStart;
+            const selectedEnd = filters.selectedEnd;
             const selectedStartMinutes = selectedStart ? timeToMinutes(selectedStart) : null;
             const selectedEndMinutes = selectedEnd ? timeToMinutes(selectedEnd) : null;
+            const invalidRange = selectedStartMinutes !== null && selectedEndMinutes !== null && selectedStartMinutes > selectedEndMinutes;
 
-            return rooms.filter((room) => {
+            if (invalidRange) {
+                return {
+                    filters,
+                    invalidRange: true,
+                    items: []
+                };
+            }
+
+            const items = rooms.filter((room) => {
                 const roomSearchTarget = normalizeText(`${room.name} ${room.type}`);
                 const roomStartMinutes = timeToMinutes(room.startTime);
                 const roomEndMinutes = timeToMinutes(room.endTime);
@@ -989,14 +1111,21 @@
                 const matchesCapacity = !minimumCapacity || room.capacity >= minimumCapacity;
                 const matchesStart = selectedStartMinutes === null || roomStartMinutes <= selectedStartMinutes;
                 const matchesEnd = selectedEndMinutes === null || roomEndMinutes >= selectedEndMinutes;
-                const matchesRange = selectedStartMinutes === null || selectedEndMinutes === null || selectedStartMinutes <= selectedEndMinutes;
 
-                return matchesSearch && matchesType && matchesCapacity && matchesStart && matchesEnd && matchesRange;
+                return matchesSearch && matchesType && matchesCapacity && matchesStart && matchesEnd;
             });
+
+            return {
+                filters,
+                invalidRange: false,
+                items
+            };
         }
 
         function applyFilters() {
-            renderRooms(getFilteredRooms());
+            const result = getFilteredRooms();
+            updateActiveFiltersSummary(result.filters);
+            renderRooms(result.items, { invalidRange: result.invalidRange });
         }
 
         reservations = loadReservations();
@@ -1010,7 +1139,7 @@
             });
         }
 
-        [roomTypeFilter, capacityFilter, startTimeFilter, endTimeFilter].forEach((element) => {
+        [dateFilter, roomTypeFilter, capacityFilter, startTimeFilter, endTimeFilter].forEach((element) => {
             if (element) {
                 element.addEventListener("change", applyFilters);
             }
