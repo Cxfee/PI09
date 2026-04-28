@@ -148,12 +148,12 @@
 
                                 <div
                                     id="notificationsPanel"
-                                    class="absolute right-0 top-14 z-30 hidden w-[20rem] max-w-[calc(100vw-2rem)] overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-soft"
+                                    class="absolute right-0 top-14 z-30 hidden w-[22rem] max-w-[calc(100vw-2rem)] overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-soft"
                                 >
                                     <div class="flex items-center justify-between border-b border-slate-200 px-4 py-3">
                                         <div>
                                             <p class="text-sm font-extrabold text-slate-900">Notificacoes</p>
-                                            <p class="text-xs text-slate-500">Acompanhe suas ultimas acoes</p>
+                                            <p class="text-xs text-slate-500">Acompanhe suas ultimas reservas e acoes</p>
                                         </div>
                                         <button
                                             id="markNotificationsReadButton"
@@ -168,7 +168,7 @@
                                         Nenhuma notificacao no momento.
                                     </div>
 
-                                    <div id="notificationsList" class="hidden max-h-80 divide-y divide-slate-100 overflow-y-auto"></div>
+                                    <div id="notificationsList" class="hidden max-h-[24rem] divide-y divide-slate-100 overflow-y-auto"></div>
                                 </div>
                             </div>
 
@@ -319,66 +319,7 @@
                             </div>
                         </div>
 
-                        <div id="alertsStack" class="grid gap-3 xl:pt-5">
-                            <div id="successAlert" class="hidden rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 shadow-soft">
-                                <div class="flex items-start justify-between gap-3">
-                                    <span class="mt-0.5 inline-flex h-7 w-7 items-center justify-center rounded-full bg-emerald-600/10 text-emerald-700">
-                                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                            <path d="m5 12 4 4L19 6"></path>
-                                        </svg>
-                                    </span>
-                                    <div class="flex-1">
-                                        <p id="successAlertTitle" class="text-xs font-extrabold uppercase tracking-wide text-slate-900">
-                                            Reserva efetuada com sucesso!
-                                        </p>
-                                        <p id="successAlertMessage" class="mt-1 text-xs leading-5 text-slate-600">
-                                            Agendamento confirmado para a sala selecionada.
-                                        </p>
-                                    </div>
-                                    <button
-                                        id="closeSuccessAlert"
-                                        type="button"
-                                        class="text-emerald-700/70 transition hover:text-emerald-800"
-                                        aria-label="Fechar alerta de sucesso"
-                                    >
-                                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                            <path d="m18 6-12 12"></path>
-                                            <path d="m6 6 12 12"></path>
-                                        </svg>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div id="errorAlert" class="hidden rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 shadow-soft">
-                                <div class="flex items-start justify-between gap-3">
-                                    <span class="mt-0.5 inline-flex h-7 w-7 items-center justify-center rounded-full bg-rose-600/10 text-rose-700">
-                                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                            <path d="m15 9-6 6"></path>
-                                            <path d="m9 9 6 6"></path>
-                                        </svg>
-                                    </span>
-                                    <div class="flex-1">
-                                        <p id="errorAlertTitle" class="text-xs font-extrabold uppercase tracking-wide text-slate-900">
-                                            Erro: horario indisponivel.
-                                        </p>
-                                        <p id="errorAlertMessage" class="mt-1 text-xs leading-5 text-slate-600">
-                                            Escolha outro horario ou tente uma sala diferente.
-                                        </p>
-                                    </div>
-                                    <button
-                                        id="closeErrorAlert"
-                                        type="button"
-                                        class="text-rose-700/70 transition hover:text-rose-800"
-                                        aria-label="Fechar alerta de erro"
-                                    >
-                                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                            <path d="m18 6-12 12"></path>
-                                            <path d="m6 6 12 12"></path>
-                                        </svg>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                        <div id="alertsStack" class="grid gap-3 xl:pt-5"></div>
                     </div>
                 </section>
 
@@ -680,15 +621,9 @@
         const clearFiltersButton = document.getElementById("clearFiltersButton");
         const clearReservationsButton = document.getElementById("clearReservationsButton");
         const restoreDemoButton = document.getElementById("restoreDemoButton");
-        const successAlert = document.getElementById("successAlert");
-        const successAlertTitle = document.getElementById("successAlertTitle");
-        const successAlertMessage = document.getElementById("successAlertMessage");
-        const closeSuccessAlert = document.getElementById("closeSuccessAlert");
-        const errorAlert = document.getElementById("errorAlert");
-        const errorAlertTitle = document.getElementById("errorAlertTitle");
-        const errorAlertMessage = document.getElementById("errorAlertMessage");
-        const closeErrorAlert = document.getElementById("closeErrorAlert");
-        let alertTimeoutId = null;
+        const alertsStack = document.getElementById("alertsStack");
+        let alerts = [];
+        const alertTimeoutIds = new Map();
 
         function formatSchedule(startTime, endTime) {
             return `${startTime} - ${endTime}`;
@@ -1199,47 +1134,130 @@
             }
         }
 
-        function showAlert(type, title, message) {
-            if (!successAlert || !errorAlert || !successAlertTitle || !successAlertMessage || !errorAlertTitle || !errorAlertMessage) {
+        function getAlertTone(type) {
+            if (type === "success") {
+                return {
+                    card: "border-emerald-200 bg-emerald-50",
+                    iconWrap: "bg-emerald-600/10 text-emerald-700",
+                    close: "text-emerald-700/70 hover:text-emerald-800",
+                    icon: `
+                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="m5 12 4 4L19 6"></path>
+                        </svg>
+                    `
+                };
+            }
+
+            return {
+                card: "border-rose-200 bg-rose-50",
+                iconWrap: "bg-rose-600/10 text-rose-700",
+                close: "text-rose-700/70 hover:text-rose-800",
+                icon: `
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="m15 9-6 6"></path>
+                        <path d="m9 9 6 6"></path>
+                    </svg>
+                `
+            };
+        }
+
+        function renderToastAlerts() {
+            if (!alertsStack) {
                 return;
             }
 
-            if (alertTimeoutId) {
-                clearTimeout(alertTimeoutId);
+            alertsStack.innerHTML = alerts.map((alert) => {
+                const tone = getAlertTone(alert.type);
+
+                return `
+                    <div class="rounded-2xl border px-4 py-3 shadow-soft ${tone.card}">
+                        <div class="flex items-start justify-between gap-3">
+                            <span class="mt-0.5 inline-flex h-7 w-7 items-center justify-center rounded-full ${tone.iconWrap}">
+                                ${tone.icon}
+                            </span>
+                            <div class="flex-1">
+                                <p class="text-xs font-extrabold uppercase tracking-wide text-slate-900">
+                                    ${alert.title}
+                                </p>
+                                <p class="mt-1 text-xs leading-5 text-slate-600">
+                                    ${alert.message}
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                data-alert-id="${alert.id}"
+                                class="transition ${tone.close}"
+                                aria-label="Fechar alerta"
+                            >
+                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="m18 6-12 12"></path>
+                                    <path d="m6 6 12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join("");
+        }
+
+        function removeAlert(alertId) {
+            if (!alertId) {
+                return;
             }
 
-            successAlert.classList.add("hidden");
-            errorAlert.classList.add("hidden");
+            const timeoutId = alertTimeoutIds.get(alertId);
 
-            if (type === "success") {
-                successAlertTitle.textContent = title;
-                successAlertMessage.textContent = message;
-                successAlert.classList.remove("hidden");
-            } else {
-                errorAlertTitle.textContent = title;
-                errorAlertMessage.textContent = message;
-                errorAlert.classList.remove("hidden");
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+                alertTimeoutIds.delete(alertId);
             }
 
-            alertTimeoutId = setTimeout(() => {
-                successAlert.classList.add("hidden");
-                errorAlert.classList.add("hidden");
-            }, 4200);
+            alerts = alerts.filter((alert) => alert.id !== alertId);
+            renderToastAlerts();
+        }
+
+        function showAlert(type, title, message) {
+            if (!alertsStack) {
+                return;
+            }
+
+            const nextAlert = {
+                id: `alert-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+                type,
+                title,
+                message
+            };
+
+            alerts = [nextAlert, ...alerts];
+
+            if (alerts.length > 5) {
+                const removedAlerts = alerts.slice(5);
+                removedAlerts.forEach((alert) => {
+                    const timeoutId = alertTimeoutIds.get(alert.id);
+
+                    if (timeoutId) {
+                        clearTimeout(timeoutId);
+                        alertTimeoutIds.delete(alert.id);
+                    }
+                });
+
+                alerts = alerts.slice(0, 5);
+            }
+
+            renderToastAlerts();
+
+            const timeoutId = setTimeout(() => {
+                removeAlert(nextAlert.id);
+            }, 9000);
+
+            alertTimeoutIds.set(nextAlert.id, timeoutId);
         }
 
         function hideAlerts() {
-            if (alertTimeoutId) {
-                clearTimeout(alertTimeoutId);
-                alertTimeoutId = null;
-            }
-
-            if (successAlert) {
-                successAlert.classList.add("hidden");
-            }
-
-            if (errorAlert) {
-                errorAlert.classList.add("hidden");
-            }
+            alertTimeoutIds.forEach((timeoutId) => clearTimeout(timeoutId));
+            alertTimeoutIds.clear();
+            alerts = [];
+            renderToastAlerts();
         }
 
         function getRoomIllustration(illustrationKey) {
@@ -1630,12 +1648,16 @@
             });
         }
 
-        if (closeSuccessAlert) {
-            closeSuccessAlert.addEventListener("click", hideAlerts);
-        }
+        if (alertsStack) {
+            alertsStack.addEventListener("click", function (event) {
+                const target = event.target.closest("[data-alert-id]");
 
-        if (closeErrorAlert) {
-            closeErrorAlert.addEventListener("click", hideAlerts);
+                if (!target) {
+                    return;
+                }
+
+                removeAlert(target.dataset.alertId);
+            });
         }
 
         if (notificationsButton) {
