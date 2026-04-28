@@ -68,11 +68,14 @@
                     <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
                         <label class="relative block w-full sm:w-72">
                             <span class="sr-only">Pesquisar</span>
-                            <svg class="pointer-events-none absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                <circle cx="11" cy="11" r="7"></circle>
-                                <path d="m20 20-3.5-3.5"></path>
-                            </svg>
+                            <span class="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-4 text-slate-400">
+                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <circle cx="11" cy="11" r="7"></circle>
+                                    <path d="m20 20-3.5-3.5"></path>
+                                </svg>
+                            </span>
                             <input
+                                id="searchInput"
                                 type="search"
                                 placeholder="Pesquisar"
                                 class="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm text-slate-700 outline-none transition focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100"
@@ -115,7 +118,7 @@
                             </div>
 
                             <div class="rounded-[24px] border border-slate-200 bg-white p-4 shadow-field sm:p-5">
-                                <form class="grid gap-4 md:grid-cols-2 xl:grid-cols-[1fr_1.2fr_1fr_1fr_auto] xl:items-end">
+                                <form id="filtersForm" class="grid gap-4 md:grid-cols-2 xl:grid-cols-[1fr_1.2fr_1fr_1fr_auto] xl:items-end">
                                     <label class="block">
                                         <span class="mb-2 block text-[0.72rem] font-extrabold uppercase tracking-[0.12em] text-slate-700">
                                             Data
@@ -128,6 +131,7 @@
                                                 <path d="M3 11h18"></path>
                                             </svg>
                                             <input
+                                                id="dateFilter"
                                                 type="date"
                                                 value="2026-04-28"
                                                 class="w-full border-0 bg-transparent text-sm font-medium text-slate-700 outline-none"
@@ -154,12 +158,8 @@
                                                 </span>
                                             </div>
                                             <div class="mt-4 grid grid-cols-2 gap-3">
-                                                <div class="rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700">
-                                                    13:00
-                                                </div>
-                                                <div class="rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700">
-                                                    22:00
-                                                </div>
+                                                <select id="startTimeFilter" class="rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100"></select>
+                                                <select id="endTimeFilter" class="rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100"></select>
                                             </div>
                                         </div>
                                     </div>
@@ -168,9 +168,10 @@
                                         <span class="mb-2 block text-[0.72rem] font-extrabold uppercase tracking-[0.12em] text-slate-700">
                                             Tipo de sala
                                         </span>
-                                        <select class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700 outline-none transition focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100">
-                                            <option>Sala de Estudo</option>
-                                            <option>Laboratorio</option>
+                                        <select id="roomTypeFilter" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700 outline-none transition focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100">
+                                            <option value="Todos">Todos</option>
+                                            <option value="Sala de Estudo">Sala de Estudo</option>
+                                            <option value="Laboratorio">Laboratorio</option>
                                         </select>
                                     </label>
 
@@ -178,15 +179,17 @@
                                         <span class="mb-2 block text-[0.72rem] font-extrabold uppercase tracking-[0.12em] text-slate-700">
                                             Capacidade
                                         </span>
-                                        <select class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700 outline-none transition focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100">
-                                            <option>4</option>
-                                            <option>6</option>
-                                            <option>8</option>
+                                        <select id="capacityFilter" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700 outline-none transition focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100">
+                                            <option value="0">Qualquer</option>
+                                            <option value="4">Min. 4 pessoas</option>
+                                            <option value="6">Min. 6 pessoas</option>
+                                            <option value="8">Min. 8 pessoas</option>
+                                            <option value="12">Min. 12 pessoas</option>
                                         </select>
                                     </label>
 
                                     <button
-                                        type="button"
+                                        type="submit"
                                         class="inline-flex h-[3.05rem] items-center justify-center rounded-2xl bg-gradient-to-r from-brand-600 to-brand-500 px-6 text-sm font-bold text-white shadow-[0_14px_26px_rgba(53,87,235,0.28)] transition hover:-translate-y-0.5 hover:from-brand-700 hover:to-brand-600"
                                     >
                                         Filtrar
@@ -239,9 +242,14 @@
                 <div class="grid gap-6 xl:grid-cols-[1.7fr_0.83fr]">
                     <section class="rounded-[24px] border border-slate-200 bg-white p-4 shadow-field sm:p-5">
                         <div class="mb-4 flex items-center justify-between gap-3">
-                            <h2 class="text-[1.65rem] font-extrabold tracking-tight text-slate-950">
-                                SALAS DISPONIVEIS
-                            </h2>
+                            <div>
+                                <h2 class="text-[1.65rem] font-extrabold tracking-tight text-slate-950">
+                                    SALAS DISPONIVEIS
+                                </h2>
+                                <p id="roomsSummary" class="mt-1 text-sm text-slate-500">
+                                    Exibindo todas as salas disponiveis no momento.
+                                </p>
+                            </div>
                             <span id="roomsCount" class="rounded-full bg-brand-50 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.12em] text-brand-700">
                                 0 resultados
                             </span>
@@ -325,7 +333,8 @@
                 name: "Sala de Estudos 3A",
                 type: "Sala de Estudo",
                 capacity: 4,
-                schedule: "13:00 - 22:00",
+                startTime: "13:00",
+                endTime: "22:00",
                 illustration: "study"
             },
             {
@@ -333,7 +342,8 @@
                 name: "Laboratorio de Biologia 2",
                 type: "Laboratorio",
                 capacity: 4,
-                schedule: "12:00 - 22:00",
+                startTime: "12:00",
+                endTime: "22:00",
                 illustration: "bio"
             },
             {
@@ -341,7 +351,8 @@
                 name: "Laboratorio Maker 1",
                 type: "Laboratorio",
                 capacity: 8,
-                schedule: "10:00 - 20:00",
+                startTime: "10:00",
+                endTime: "20:00",
                 illustration: "maker"
             },
             {
@@ -349,7 +360,8 @@
                 name: "Sala de Estudos 2B",
                 type: "Sala de Estudo",
                 capacity: 6,
-                schedule: "09:00 - 21:00",
+                startTime: "09:00",
+                endTime: "21:00",
                 illustration: "study-wide"
             },
             {
@@ -357,7 +369,8 @@
                 name: "Sala de Reuniao 1C",
                 type: "Sala de Estudo",
                 capacity: 8,
-                schedule: "08:00 - 18:00",
+                startTime: "08:00",
+                endTime: "18:00",
                 illustration: "meeting"
             },
             {
@@ -365,9 +378,29 @@
                 name: "Laboratorio de Informatica 4",
                 type: "Laboratorio",
                 capacity: 12,
-                schedule: "07:00 - 19:00",
+                startTime: "07:00",
+                endTime: "19:00",
                 illustration: "informatics"
             }
+        ];
+
+        const timeOptions = [
+            "07:00",
+            "08:00",
+            "09:00",
+            "10:00",
+            "11:00",
+            "12:00",
+            "13:00",
+            "14:00",
+            "15:00",
+            "16:00",
+            "17:00",
+            "18:00",
+            "19:00",
+            "20:00",
+            "21:00",
+            "22:00"
         ];
 
         const roomIllustrations = {
@@ -444,6 +477,58 @@
         const roomsGrid = document.getElementById("roomsGrid");
         const roomsCount = document.getElementById("roomsCount");
         const roomsEmpty = document.getElementById("roomsEmpty");
+        const roomsSummary = document.getElementById("roomsSummary");
+        const searchInput = document.getElementById("searchInput");
+        const filtersForm = document.getElementById("filtersForm");
+        const roomTypeFilter = document.getElementById("roomTypeFilter");
+        const capacityFilter = document.getElementById("capacityFilter");
+        const startTimeFilter = document.getElementById("startTimeFilter");
+        const endTimeFilter = document.getElementById("endTimeFilter");
+
+        function formatSchedule(startTime, endTime) {
+            return `${startTime} - ${endTime}`;
+        }
+
+        function timeToMinutes(time) {
+            const [hours, minutes] = time.split(":").map(Number);
+            return (hours * 60) + minutes;
+        }
+
+        function normalizeText(value) {
+            return value
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .toLowerCase()
+                .trim();
+        }
+
+        function populateTimeSelect(selectElement, selectedValue, placeholderLabel) {
+            if (!selectElement) {
+                return;
+            }
+
+            const placeholderOption = `
+                <option value="" ${selectedValue ? "" : "selected"}>${placeholderLabel}</option>
+            `;
+            const timeMarkup = timeOptions.map((time) => `
+                <option value="${time}" ${time === selectedValue ? "selected" : ""}>${time}</option>
+            `).join("");
+
+            selectElement.innerHTML = `${placeholderOption}${timeMarkup}`;
+        }
+
+        function updateRoomsSummary(filteredCount, totalCount) {
+            if (!roomsSummary) {
+                return;
+            }
+
+            if (filteredCount === totalCount) {
+                roomsSummary.textContent = "Exibindo todas as salas disponiveis no momento.";
+                return;
+            }
+
+            roomsSummary.textContent = `Mostrando ${filteredCount} de ${totalCount} salas apos aplicar os filtros.`;
+        }
 
         function getRoomIllustration(illustrationKey) {
             return roomIllustrations[illustrationKey] || roomIllustrations.study;
@@ -455,6 +540,7 @@
             }
 
             roomsCount.textContent = `${items.length} ${items.length === 1 ? "resultado" : "resultados"}`;
+            updateRoomsSummary(items.length, rooms.length);
 
             if (!items.length) {
                 roomsGrid.innerHTML = "";
@@ -475,7 +561,7 @@
                         <h3 class="text-[1.05rem] font-extrabold text-slate-900">${room.name}</h3>
                         <p class="text-sm text-slate-700">Tipo: ${room.type}</p>
                         <p class="text-sm text-slate-700">Capacidade: ${room.capacity}</p>
-                        <p class="text-sm text-slate-700">Horario Disponivel: ${room.schedule}</p>
+                        <p class="text-sm text-slate-700">Horario Disponivel: ${formatSchedule(room.startTime, room.endTime)}</p>
                         <button
                             type="button"
                             data-room-id="${room.id}"
@@ -486,6 +572,55 @@
                     </div>
                 </article>
             `).join("");
+        }
+
+        function getFilteredRooms() {
+            const searchTerm = normalizeText(searchInput?.value || "");
+            const selectedType = roomTypeFilter?.value || "Todos";
+            const minimumCapacity = Number(capacityFilter?.value || 0);
+            const selectedStart = startTimeFilter?.value || "";
+            const selectedEnd = endTimeFilter?.value || "";
+            const selectedStartMinutes = selectedStart ? timeToMinutes(selectedStart) : null;
+            const selectedEndMinutes = selectedEnd ? timeToMinutes(selectedEnd) : null;
+
+            return rooms.filter((room) => {
+                const roomSearchTarget = normalizeText(`${room.name} ${room.type}`);
+                const roomStartMinutes = timeToMinutes(room.startTime);
+                const roomEndMinutes = timeToMinutes(room.endTime);
+
+                const matchesSearch = !searchTerm || roomSearchTarget.includes(searchTerm);
+                const matchesType = selectedType === "Todos" || room.type === selectedType;
+                const matchesCapacity = !minimumCapacity || room.capacity >= minimumCapacity;
+                const matchesStart = selectedStartMinutes === null || roomStartMinutes <= selectedStartMinutes;
+                const matchesEnd = selectedEndMinutes === null || roomEndMinutes >= selectedEndMinutes;
+                const matchesRange = selectedStartMinutes === null || selectedEndMinutes === null || selectedStartMinutes <= selectedEndMinutes;
+
+                return matchesSearch && matchesType && matchesCapacity && matchesStart && matchesEnd && matchesRange;
+            });
+        }
+
+        function applyFilters() {
+            renderRooms(getFilteredRooms());
+        }
+
+        populateTimeSelect(startTimeFilter, "", "Horario inicial");
+        populateTimeSelect(endTimeFilter, "", "Horario final");
+
+        if (filtersForm) {
+            filtersForm.addEventListener("submit", function (event) {
+                event.preventDefault();
+                applyFilters();
+            });
+        }
+
+        [roomTypeFilter, capacityFilter, startTimeFilter, endTimeFilter].forEach((element) => {
+            if (element) {
+                element.addEventListener("change", applyFilters);
+            }
+        });
+
+        if (searchInput) {
+            searchInput.addEventListener("input", applyFilters);
         }
 
         renderRooms();
