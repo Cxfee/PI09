@@ -41,6 +41,52 @@
             }
         }
     </style>
+    <style>
+        .time-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+        }
+
+        .time-slider:focus {
+            outline: none;
+        }
+
+        .time-slider::-webkit-slider-runnable-track {
+            height: 0;
+            background: transparent;
+        }
+
+        .time-slider::-moz-range-track {
+            height: 0;
+            background: transparent;
+        }
+
+        .time-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            margin-top: -7px;
+            height: 16px;
+            width: 16px;
+            border-radius: 999px;
+            border: 3px solid #ffffff;
+            background: #4f73ff;
+            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.18);
+            cursor: pointer;
+            position: relative;
+            z-index: 2;
+        }
+
+        .time-slider::-moz-range-thumb {
+            height: 16px;
+            width: 16px;
+            border-radius: 999px;
+            border: 3px solid #ffffff;
+            background: #4f73ff;
+            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.18);
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body class="min-h-screen bg-[radial-gradient(circle_at_top,_#edf4ff_0,_#f7faff_35%,_#eff5ff_100%)] text-slate-900">
     <main class="mx-auto min-h-screen max-w-[1180px] px-4 py-5 sm:px-6 sm:py-8">
@@ -153,12 +199,27 @@
                                         <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5">
                                             <div class="flex items-center gap-3">
                                                 <span class="text-xs font-bold text-slate-500">
-                                                    08:00
+                                                    07:00
                                                 </span>
-                                                <div class="relative h-1.5 flex-1 rounded-full bg-slate-200">
-                                                    <div class="absolute left-[20%] right-[22%] h-1.5 rounded-full bg-brand-500"></div>
-                                                    <span class="absolute left-[20%] top-1/2 h-4 w-4 -translate-y-1/2 rounded-full border-[3px] border-white bg-brand-500 shadow"></span>
-                                                    <span class="absolute right-[22%] top-1/2 h-4 w-4 -translate-y-1/2 rounded-full border-[3px] border-white bg-brand-500 shadow"></span>
+                                                <div class="relative flex-1 py-3">
+                                                    <div class="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-slate-200"></div>
+                                                    <div id="timeRangeFill" class="absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-brand-500"></div>
+                                                    <input
+                                                        id="startTimeRange"
+                                                        type="range"
+                                                        min="0"
+                                                        max="15"
+                                                        value="0"
+                                                        class="time-slider absolute inset-0 z-20 w-full"
+                                                    >
+                                                    <input
+                                                        id="endTimeRange"
+                                                        type="range"
+                                                        min="0"
+                                                        max="15"
+                                                        value="15"
+                                                        class="time-slider absolute inset-0 z-10 w-full"
+                                                    >
                                                 </div>
                                                 <span class="text-xs font-bold text-slate-500">
                                                     22:00
@@ -567,6 +628,9 @@
         const capacityFilter = document.getElementById("capacityFilter");
         const startTimeFilter = document.getElementById("startTimeFilter");
         const endTimeFilter = document.getElementById("endTimeFilter");
+        const startTimeRange = document.getElementById("startTimeRange");
+        const endTimeRange = document.getElementById("endTimeRange");
+        const timeRangeFill = document.getElementById("timeRangeFill");
         const dateFilter = document.getElementById("dateFilter");
         const reservationsTableBody = document.getElementById("reservationsTableBody");
         const reservationsSummary = document.getElementById("reservationsSummary");
@@ -690,13 +754,20 @@
         }
 
         function getCurrentFiltersState() {
+            const selectedStart = startTimeFilter?.value || "";
+            const selectedEnd = endTimeFilter?.value || "";
+            const lastTimeOption = timeOptions[timeOptions.length - 1] || "22:00";
+
             return {
                 searchTerm: searchInput?.value?.trim() || "",
                 selectedType: roomTypeFilter?.value || "Todos",
                 minimumCapacity: Number(capacityFilter?.value || 0),
-                selectedStart: startTimeFilter?.value || "",
-                selectedEnd: endTimeFilter?.value || "",
-                selectedDate: getRequestedDate()
+                selectedStart,
+                selectedEnd,
+                selectedDate: getRequestedDate(),
+                selectedStartDisplay: selectedStart || timeOptions[0] || "07:00",
+                selectedEndDisplay: selectedEnd || lastTimeOption,
+                hasExplicitTimeFilter: Boolean(selectedStart || selectedEnd)
             };
         }
 
@@ -713,6 +784,71 @@
             `).join("");
 
             selectElement.innerHTML = `${placeholderOption}${timeMarkup}`;
+        }
+
+        function getTimeIndex(time) {
+            const index = timeOptions.indexOf(time);
+            return index >= 0 ? index : 0;
+        }
+
+        function getTimeRangeBounds() {
+            const lastIndex = timeOptions.length - 1;
+            const startIndex = Math.max(0, Math.min(lastIndex, Number(startTimeRange?.value ?? 0)));
+            const endIndex = Math.max(0, Math.min(lastIndex, Number(endTimeRange?.value ?? lastIndex)));
+
+            return {
+                startIndex,
+                endIndex,
+                startValue: timeOptions[startIndex] || timeOptions[0],
+                endValue: timeOptions[endIndex] || timeOptions[lastIndex],
+                isFullRange: startIndex === 0 && endIndex === lastIndex
+            };
+        }
+
+        function updateTimeRangeFill(startIndex, endIndex) {
+            if (!timeRangeFill) {
+                return;
+            }
+
+            const totalSteps = Math.max(timeOptions.length - 1, 1);
+            const startPercent = (startIndex / totalSteps) * 100;
+            const endPercent = (endIndex / totalSteps) * 100;
+
+            timeRangeFill.style.left = `${startPercent}%`;
+            timeRangeFill.style.right = `${100 - endPercent}%`;
+        }
+
+        function syncRangesFromSelects() {
+            if (!startTimeRange || !endTimeRange) {
+                return;
+            }
+
+            const lastIndex = timeOptions.length - 1;
+            const selectedStart = startTimeFilter?.value || timeOptions[0];
+            const selectedEnd = endTimeFilter?.value || timeOptions[lastIndex];
+            const startIndex = getTimeIndex(selectedStart);
+            const endIndex = getTimeIndex(selectedEnd);
+
+            startTimeRange.max = String(lastIndex);
+            endTimeRange.max = String(lastIndex);
+            startTimeRange.value = String(Math.min(startIndex, endIndex));
+            endTimeRange.value = String(Math.max(startIndex, endIndex));
+
+            updateTimeRangeFill(Number(startTimeRange.value), Number(endTimeRange.value));
+        }
+
+        function syncSelectsFromRanges() {
+            if (!startTimeFilter || !endTimeFilter) {
+                return;
+            }
+
+            const { startIndex, endIndex, startValue, endValue } = getTimeRangeBounds();
+            const lastIndex = timeOptions.length - 1;
+
+            startTimeFilter.value = startIndex === 0 ? "" : startValue;
+            endTimeFilter.value = endIndex === lastIndex ? "" : endValue;
+
+            updateTimeRangeFill(startIndex, endIndex);
         }
 
         function updateRoomsSummary(filteredCount, totalCount) {
@@ -764,8 +900,8 @@
                 chips.push(`Capacidade: ${filters.minimumCapacity}+`);
             }
 
-            if (filters.selectedStart || filters.selectedEnd) {
-                chips.push(`Horario: ${filters.selectedStart || "--:--"} - ${filters.selectedEnd || "--:--"}`);
+            if (filters.hasExplicitTimeFilter) {
+                chips.push(`Horario: ${filters.selectedStartDisplay} - ${filters.selectedEndDisplay}`);
             }
 
             activeFiltersChips.innerHTML = chips.map((label) => `
@@ -796,8 +932,8 @@
                 return;
             }
 
-            const startLabel = selectedStart || "--:--";
-            const endLabel = selectedEnd || "--:--";
+            const startLabel = selectedStart || timeOptions[0] || "07:00";
+            const endLabel = selectedEnd || timeOptions[timeOptions.length - 1] || "22:00";
             requestedSlotSummary.textContent = `Horario solicitado: ${formatShortDate(selectedDate)} | ${startLabel} - ${endLabel}`;
         }
 
@@ -1131,6 +1267,7 @@
         reservations = loadReservations();
         populateTimeSelect(startTimeFilter, "", "Horario inicial");
         populateTimeSelect(endTimeFilter, "", "Horario final");
+        syncRangesFromSelects();
 
         if (filtersForm) {
             filtersForm.addEventListener("submit", function (event) {
@@ -1139,11 +1276,42 @@
             });
         }
 
-        [dateFilter, roomTypeFilter, capacityFilter, startTimeFilter, endTimeFilter].forEach((element) => {
+        [dateFilter, roomTypeFilter, capacityFilter].forEach((element) => {
             if (element) {
                 element.addEventListener("change", applyFilters);
             }
         });
+
+        [startTimeFilter, endTimeFilter].forEach((element) => {
+            if (element) {
+                element.addEventListener("change", function () {
+                    syncRangesFromSelects();
+                    applyFilters();
+                });
+            }
+        });
+
+        if (startTimeRange) {
+            startTimeRange.addEventListener("input", function () {
+                if (endTimeRange && Number(startTimeRange.value) > Number(endTimeRange.value)) {
+                    endTimeRange.value = startTimeRange.value;
+                }
+
+                syncSelectsFromRanges();
+                applyFilters();
+            });
+        }
+
+        if (endTimeRange) {
+            endTimeRange.addEventListener("input", function () {
+                if (startTimeRange && Number(endTimeRange.value) < Number(startTimeRange.value)) {
+                    startTimeRange.value = endTimeRange.value;
+                }
+
+                syncSelectsFromRanges();
+                applyFilters();
+            });
+        }
 
         if (searchInput) {
             searchInput.addEventListener("input", applyFilters);
@@ -1162,6 +1330,7 @@
                     searchInput.value = "";
                 }
 
+                syncRangesFromSelects();
                 hideAlerts();
                 applyFilters();
             });
@@ -1236,8 +1405,8 @@
             closeErrorAlert.addEventListener("click", hideAlerts);
         }
 
-        renderRooms();
         renderReservations();
+        applyFilters();
     </script>
 </body>
 </html>
