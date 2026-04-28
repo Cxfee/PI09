@@ -63,7 +63,7 @@
                         </p>
                     </div>
 
-                    <form class="mt-8 space-y-4 sm:mt-10 sm:space-y-5">
+                    <form id="signupForm" novalidate class="mt-8 space-y-4 sm:mt-10 sm:space-y-5">
                         <label class="block">
                             <span class="sr-only">Digite seu e-mail</span>
                             <div class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3.5 shadow-field transition duration-200 focus-within:border-brand-400 focus-within:ring-4 focus-within:ring-brand-100 sm:gap-4 sm:px-5 sm:py-4">
@@ -72,6 +72,7 @@
                                     <path d="m4 7 8 6 8-6"></path>
                                 </svg>
                                 <input
+                                    id="signupEmail"
                                     type="email"
                                     name="email"
                                     autocomplete="email"
@@ -90,6 +91,7 @@
                                     <path d="M7 14h6"></path>
                                 </svg>
                                 <input
+                                    id="signupCpf"
                                     type="text"
                                     name="cpf"
                                     inputmode="numeric"
@@ -107,6 +109,7 @@
                                     <circle cx="12" cy="8" r="4"></circle>
                                 </svg>
                                 <input
+                                    id="signupName"
                                     type="text"
                                     name="nome"
                                     autocomplete="name"
@@ -125,7 +128,7 @@
                                     <path d="M12 15v2"></path>
                                 </svg>
                                 <input
-                                    id="password"
+                                    id="signupPassword"
                                     type="password"
                                     name="password"
                                     autocomplete="new-password"
@@ -145,6 +148,8 @@
                                 </button>
                             </div>
                         </label>
+
+                        <div id="signupFeedback" class="hidden rounded-xl border px-4 py-3 text-sm font-semibold"></div>
 
                         <button
                             type="submit"
@@ -166,8 +171,15 @@
     </main>
 
     <script>
+        const REGISTERED_STUDENTS_KEY = "roomEasyRegisteredStudents";
+        const FLASH_MESSAGE_KEY = "roomEasyAuthFlashMessage";
+        const signupForm = document.getElementById("signupForm");
+        const signupEmailInput = document.getElementById("signupEmail");
+        const signupCpfInput = document.getElementById("signupCpf");
+        const signupNameInput = document.getElementById("signupName");
         const togglePasswordButton = document.getElementById("togglePassword");
-        const passwordInput = document.getElementById("password");
+        const passwordInput = document.getElementById("signupPassword");
+        const signupFeedback = document.getElementById("signupFeedback");
         const openEyeIcon = `
             <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z"></path>
@@ -183,6 +195,54 @@
             </svg>
         `;
 
+        function showSignupFeedback(type, message) {
+            if (!signupFeedback) {
+                return;
+            }
+
+            const tone = type === "success"
+                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                : "border-rose-200 bg-rose-50 text-rose-700";
+
+            signupFeedback.className = `rounded-xl border px-4 py-3 text-sm font-semibold ${tone}`;
+            signupFeedback.textContent = message;
+            signupFeedback.classList.remove("hidden");
+        }
+
+        function hideSignupFeedback() {
+            if (signupFeedback) {
+                signupFeedback.classList.add("hidden");
+            }
+        }
+
+        function normalizeCpf(value) {
+            return value.replace(/\D/g, "");
+        }
+
+        function isValidEmail(value) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+        }
+
+        function loadRegisteredStudents() {
+            try {
+                const storedStudents = window.localStorage.getItem(REGISTERED_STUDENTS_KEY);
+                const parsedStudents = storedStudents ? JSON.parse(storedStudents) : [];
+                return Array.isArray(parsedStudents) ? parsedStudents : [];
+            } catch (error) {
+                return [];
+            }
+        }
+
+        function saveRegisteredStudents(students) {
+            try {
+                window.localStorage.setItem(REGISTERED_STUDENTS_KEY, JSON.stringify(students));
+            } catch (error) {
+                return false;
+            }
+
+            return true;
+        }
+
         if (togglePasswordButton && passwordInput) {
             togglePasswordButton.addEventListener("click", function () {
                 const isHidden = passwordInput.type === "password";
@@ -191,6 +251,87 @@
                 togglePasswordButton.setAttribute("aria-label", isHidden ? "Ocultar senha" : "Mostrar senha");
             });
         }
+
+        if (signupForm && signupEmailInput && signupCpfInput && signupNameInput && passwordInput) {
+            signupForm.addEventListener("submit", function (event) {
+                event.preventDefault();
+
+                const email = signupEmailInput.value.trim().toLowerCase();
+                const cpf = normalizeCpf(signupCpfInput.value);
+                const name = signupNameInput.value.trim();
+                const password = passwordInput.value.trim();
+
+                if (!email || !cpf || !name || !password) {
+                    showSignupFeedback("error", "Preencha todos os campos para criar sua conta.");
+                    return;
+                }
+
+                if (!isValidEmail(email)) {
+                    showSignupFeedback("error", "Digite um e-mail valido para continuar.");
+                    return;
+                }
+
+                if (cpf.length !== 11) {
+                    showSignupFeedback("error", "Digite um CPF com 11 digitos.");
+                    return;
+                }
+
+                if (name.length < 3) {
+                    showSignupFeedback("error", "Digite seu nome completo ou pelo menos 3 caracteres.");
+                    return;
+                }
+
+                if (password.length < 6) {
+                    showSignupFeedback("error", "A senha precisa ter pelo menos 6 caracteres.");
+                    return;
+                }
+
+                const registeredStudents = loadRegisteredStudents();
+                const duplicatedStudent = registeredStudents.find((student) => (
+                    student.email === email || student.cpf === cpf
+                ));
+
+                if (duplicatedStudent) {
+                    showSignupFeedback("error", "Ja existe uma conta cadastrada com esse e-mail ou CPF.");
+                    return;
+                }
+
+                const nextStudents = [
+                    ...registeredStudents,
+                    {
+                        email,
+                        cpf,
+                        name,
+                        password
+                    }
+                ];
+
+                const saved = saveRegisteredStudents(nextStudents);
+
+                if (!saved) {
+                    showSignupFeedback("error", "Nao foi possivel salvar sua conta agora. Tente novamente.");
+                    return;
+                }
+
+                try {
+                    window.sessionStorage.setItem(FLASH_MESSAGE_KEY, "Conta criada com sucesso. Faca login para entrar no painel.");
+                } catch (error) {
+                    // Keep the signup flow working even if the flash message cannot be saved.
+                }
+
+                showSignupFeedback("success", "Conta criada com sucesso. Redirecionando para o login...");
+
+                window.setTimeout(() => {
+                    window.location.href = "./index.html";
+                }, 1200);
+            });
+        }
+
+        [signupEmailInput, signupCpfInput, signupNameInput, passwordInput].forEach((field) => {
+            if (field) {
+                field.addEventListener("input", hideSignupFeedback);
+            }
+        });
     </script>
 </body>
 </html>

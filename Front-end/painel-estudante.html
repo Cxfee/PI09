@@ -88,7 +88,7 @@
         }
     </style>
 </head>
-<body class="min-h-screen bg-[radial-gradient(circle_at_top,_#edf4ff_0,_#f7faff_35%,_#eff5ff_100%)] text-slate-900">
+<body class="min-h-screen overflow-x-hidden bg-[radial-gradient(circle_at_top,_#edf4ff_0,_#f7faff_35%,_#eff5ff_100%)] text-slate-900">
     <main class="mx-auto min-h-screen max-w-[1180px] px-4 py-5 sm:px-6 sm:py-8">
         <div class="overflow-hidden rounded-[30px] border border-white/80 bg-white shadow-panel">
             <header class="border-b border-slate-200 px-5 py-4 sm:px-6 lg:px-8">
@@ -128,7 +128,7 @@
                             >
                         </label>
 
-                        <div class="flex items-center justify-end gap-3">
+                        <div class="flex flex-wrap items-center justify-end gap-3">
                             <div class="relative">
                                 <button
                                     id="notificationsButton"
@@ -172,18 +172,32 @@
                                 </div>
                             </div>
 
-                            <button type="button" class="inline-flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2.5 transition hover:border-brand-200">
-                                <div class="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-brand-300 to-brand-600 text-xs font-bold text-white">
+                            <div class="inline-flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2.5">
+                                <div id="studentInitials" class="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-brand-300 to-brand-600 text-xs font-bold text-white">
                                     AL
                                 </div>
                                 <span class="hidden sm:block">
-                                    <span class="block text-sm font-semibold text-slate-700">
+                                    <span id="studentName" class="block text-sm font-semibold text-slate-700">
                                         Aluna
                                     </span>
                                     <span id="headerReservationText" class="block text-xs text-slate-500">
                                         0 reservas ativas
                                     </span>
                                 </span>
+                            </div>
+
+                            <button
+                                id="logoutButton"
+                                type="button"
+                                aria-label="Sair"
+                                class="inline-flex h-11 items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 transition hover:border-rose-200 hover:text-rose-600"
+                            >
+                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                    <path d="m16 17 5-5-5-5"></path>
+                                    <path d="M21 12H9"></path>
+                                </svg>
+                                <span class="hidden sm:inline">Sair</span>
                             </button>
                         </div>
                     </div>
@@ -562,6 +576,7 @@
         };
 
         const STORAGE_KEY = "roomEasyStudentReservations";
+        const CURRENT_STUDENT_KEY = "roomEasyCurrentStudent";
         const NOTIFICATIONS_STORAGE_KEY = "roomEasyStudentNotifications";
         const defaultReservations = [
             {
@@ -588,6 +603,7 @@
         ];
         let reservations = [];
         let notifications = [];
+        let currentStudent = null;
 
         const roomsGrid = document.getElementById("roomsGrid");
         const roomsCount = document.getElementById("roomsCount");
@@ -617,7 +633,10 @@
         const notificationsList = document.getElementById("notificationsList");
         const notificationsEmpty = document.getElementById("notificationsEmpty");
         const markNotificationsReadButton = document.getElementById("markNotificationsReadButton");
+        const studentInitials = document.getElementById("studentInitials");
+        const studentName = document.getElementById("studentName");
         const headerReservationText = document.getElementById("headerReservationText");
+        const logoutButton = document.getElementById("logoutButton");
         const clearFiltersButton = document.getElementById("clearFiltersButton");
         const clearReservationsButton = document.getElementById("clearReservationsButton");
         const restoreDemoButton = document.getElementById("restoreDemoButton");
@@ -631,6 +650,64 @@
 
         function cloneDefaultReservations() {
             return defaultReservations.map((reservation) => ({ ...reservation }));
+        }
+
+        function loadCurrentStudent() {
+            try {
+                const storedStudent = window.localStorage.getItem(CURRENT_STUDENT_KEY);
+
+                if (!storedStudent) {
+                    return null;
+                }
+
+                const parsedStudent = JSON.parse(storedStudent);
+
+                if (!parsedStudent || typeof parsedStudent !== "object") {
+                    return null;
+                }
+
+                return parsedStudent;
+            } catch (error) {
+                return null;
+            }
+        }
+
+        function getStudentDisplayName(student) {
+            if (student?.name && typeof student.name === "string" && student.name.trim()) {
+                return student.name.trim();
+            }
+
+            if (student?.email && typeof student.email === "string" && student.email.includes("@")) {
+                const localPart = student.email.split("@")[0].replace(/[._-]+/g, " ").trim();
+
+                if (localPart) {
+                    return localPart.replace(/\b\w/g, (letter) => letter.toUpperCase());
+                }
+            }
+
+            return "Aluna";
+        }
+
+        function getStudentInitialsLabel(name) {
+            const parts = name.split(" ").filter(Boolean).slice(0, 2);
+
+            if (!parts.length) {
+                return "AL";
+            }
+
+            return parts.map((part) => part.charAt(0).toUpperCase()).join("");
+        }
+
+        function updateCurrentStudentUI() {
+            const displayName = getStudentDisplayName(currentStudent);
+
+            if (studentName) {
+                studentName.textContent = displayName;
+            }
+
+            if (studentInitials) {
+                studentInitials.textContent = getStudentInitialsLabel(displayName);
+            }
         }
 
         function isValidReservation(value) {
@@ -1134,6 +1211,22 @@
             }
         }
 
+        function handleLogout() {
+            const confirmed = window.confirm("Deseja sair do painel e voltar para o login?");
+
+            if (!confirmed) {
+                return;
+            }
+
+            try {
+                window.localStorage.removeItem(CURRENT_STUDENT_KEY);
+            } catch (error) {
+                // Continue to the login screen even if storage is unavailable.
+            }
+
+            window.location.href = "./index.html";
+        }
+
         function getAlertTone(type) {
             if (type === "success") {
                 return {
@@ -1514,6 +1607,8 @@
             renderRooms(result.items, { invalidRange: result.invalidRange });
         }
 
+        currentStudent = loadCurrentStudent();
+        updateCurrentStudentUI();
         reservations = loadReservations();
         notifications = loadNotifications();
         populateTimeSelect(startTimeFilter, "", "Horario inicial");
@@ -1665,6 +1760,10 @@
                 event.stopPropagation();
                 toggleNotificationsPanel();
             });
+        }
+
+        if (logoutButton) {
+            logoutButton.addEventListener("click", handleLogout);
         }
 
         if (markNotificationsReadButton) {

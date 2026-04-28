@@ -63,7 +63,7 @@
                         </p>
                     </div>
 
-                    <form action="./painel-estudante.html" class="mt-8 space-y-4 sm:mt-10 sm:space-y-5">
+                    <form id="loginForm" action="./painel-estudante.html" novalidate class="mt-8 space-y-4 sm:mt-10 sm:space-y-5">
                         <label class="block">
                             <span class="sr-only">Digite seu e-mail ou CPF</span>
                             <div class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3.5 shadow-field transition duration-200 focus-within:border-brand-400 focus-within:ring-4 focus-within:ring-brand-100 sm:gap-4 sm:px-5 sm:py-4">
@@ -72,7 +72,10 @@
                                     <path d="m4 7 8 6 8-6"></path>
                                 </svg>
                                 <input
+                                    id="loginIdentifier"
                                     type="text"
+                                    name="identifier"
+                                    autocomplete="username"
                                     placeholder="Digite seu e-mail ou CPF"
                                     class="w-full border-0 bg-transparent text-base text-slate-700 placeholder:text-slate-400 focus:outline-none sm:text-lg"
                                 >
@@ -90,6 +93,8 @@
                                 <input
                                     id="password"
                                     type="password"
+                                    name="password"
+                                    autocomplete="current-password"
                                     placeholder="Senha"
                                     class="w-full border-0 bg-transparent text-base text-slate-700 placeholder:text-slate-400 focus:outline-none sm:text-lg"
                                 >
@@ -113,6 +118,8 @@
                             </a>
                         </div>
 
+                        <div id="loginFeedback" class="hidden rounded-xl border px-4 py-3 text-sm font-semibold"></div>
+
                         <button
                             type="submit"
                             class="w-full rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 px-6 py-3 text-base font-bold text-white shadow-[0_14px_30px_rgba(53,87,235,0.28)] transition duration-200 hover:-translate-y-0.5 hover:from-brand-700 hover:to-brand-600 sm:py-3.5 sm:text-lg"
@@ -133,8 +140,14 @@
     </main>
 
     <script>
+        const REGISTERED_STUDENTS_KEY = "roomEasyRegisteredStudents";
+        const CURRENT_STUDENT_KEY = "roomEasyCurrentStudent";
+        const FLASH_MESSAGE_KEY = "roomEasyAuthFlashMessage";
+        const loginForm = document.getElementById("loginForm");
+        const loginIdentifierInput = document.getElementById("loginIdentifier");
         const togglePasswordButton = document.getElementById("togglePassword");
         const passwordInput = document.getElementById("password");
+        const loginFeedback = document.getElementById("loginFeedback");
         const openEyeIcon = `
             <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z"></path>
@@ -150,6 +163,80 @@
             </svg>
         `;
 
+        function showLoginFeedback(type, message) {
+            if (!loginFeedback) {
+                return;
+            }
+
+            const tone = type === "success"
+                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                : "border-rose-200 bg-rose-50 text-rose-700";
+
+            loginFeedback.className = `rounded-xl border px-4 py-3 text-sm font-semibold ${tone}`;
+            loginFeedback.textContent = message;
+            loginFeedback.classList.remove("hidden");
+        }
+
+        function hideLoginFeedback() {
+            if (loginFeedback) {
+                loginFeedback.classList.add("hidden");
+            }
+        }
+
+        function normalizeCpf(value) {
+            return value.replace(/\D/g, "");
+        }
+
+        function isValidEmail(value) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+        }
+
+        function isValidIdentifier(value) {
+            return isValidEmail(value) || normalizeCpf(value).length === 11;
+        }
+
+        function loadRegisteredStudents() {
+            try {
+                const storedStudents = window.localStorage.getItem(REGISTERED_STUDENTS_KEY);
+                const parsedStudents = storedStudents ? JSON.parse(storedStudents) : [];
+                return Array.isArray(parsedStudents) ? parsedStudents : [];
+            } catch (error) {
+                return [];
+            }
+        }
+
+        function saveCurrentStudent(student) {
+            try {
+                window.localStorage.setItem(CURRENT_STUDENT_KEY, JSON.stringify(student));
+            } catch (error) {
+                return;
+            }
+        }
+
+        function getFallbackName(identifier) {
+            if (isValidEmail(identifier)) {
+                const localPart = identifier.split("@")[0].replace(/[._-]+/g, " ").trim();
+                return localPart ? localPart.replace(/\b\w/g, (letter) => letter.toUpperCase()) : "Aluna";
+            }
+
+            return "Aluna";
+        }
+
+        function consumeFlashMessage() {
+            try {
+                const message = window.sessionStorage.getItem(FLASH_MESSAGE_KEY);
+
+                if (!message) {
+                    return;
+                }
+
+                window.sessionStorage.removeItem(FLASH_MESSAGE_KEY);
+                showLoginFeedback("success", message);
+            } catch (error) {
+                return;
+            }
+        }
+
         if (togglePasswordButton && passwordInput) {
             togglePasswordButton.addEventListener("click", function () {
                 const isHidden = passwordInput.type === "password";
@@ -158,6 +245,68 @@
                 togglePasswordButton.setAttribute("aria-label", isHidden ? "Ocultar senha" : "Mostrar senha");
             });
         }
+
+        if (loginForm && loginIdentifierInput && passwordInput) {
+            loginForm.addEventListener("submit", function (event) {
+                event.preventDefault();
+
+                const identifier = loginIdentifierInput.value.trim();
+                const password = passwordInput.value.trim();
+
+                if (!identifier || !password) {
+                    showLoginFeedback("error", "Preencha seu e-mail ou CPF e tambem a senha.");
+                    return;
+                }
+
+                if (!isValidIdentifier(identifier)) {
+                    showLoginFeedback("error", "Digite um e-mail valido ou um CPF com 11 digitos.");
+                    return;
+                }
+
+                if (password.length < 6) {
+                    showLoginFeedback("error", "A senha precisa ter pelo menos 6 caracteres.");
+                    return;
+                }
+
+                const registeredStudents = loadRegisteredStudents();
+
+                if (registeredStudents.length) {
+                    const normalizedIdentifier = identifier.toLowerCase();
+                    const normalizedCpf = normalizeCpf(identifier);
+                    const matchedStudent = registeredStudents.find((student) => (
+                        student.email === normalizedIdentifier ||
+                        student.cpf === normalizedCpf
+                    ));
+
+                    if (!matchedStudent || matchedStudent.password !== password) {
+                        showLoginFeedback("error", "Nao encontramos uma conta com esses dados. Confira e tente novamente.");
+                        return;
+                    }
+
+                    saveCurrentStudent({
+                        name: matchedStudent.name,
+                        email: matchedStudent.email,
+                        cpf: matchedStudent.cpf
+                    });
+                } else {
+                    saveCurrentStudent({
+                        name: getFallbackName(identifier),
+                        email: isValidEmail(identifier) ? identifier.toLowerCase() : "",
+                        cpf: normalizeCpf(identifier)
+                    });
+                }
+
+                window.location.href = loginForm.action;
+            });
+        }
+
+        [loginIdentifierInput, passwordInput].forEach((field) => {
+            if (field) {
+                field.addEventListener("input", hideLoginFeedback);
+            }
+        });
+
+        consumeFlashMessage();
     </script>
 </body>
 </html>
