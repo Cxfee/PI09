@@ -56,7 +56,7 @@
                             </svg>
                         </div>
                         <div>
-                            <p class="text-lg font-extrabold tracking-tight text-slate-900">
+                            <p class="text-lg font-extrabold tracking-tight text-brand-700">
                                 RoomEasy
                             </p>
                             <p class="text-sm text-slate-500">
@@ -84,7 +84,9 @@
 
                         <div class="flex items-center justify-end gap-3">
                             <button type="button" class="relative inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-500 transition hover:border-brand-200 hover:text-brand-700">
-                                <span class="absolute right-3 top-3 h-2.5 w-2.5 rounded-full bg-rose-500 ring-2 ring-white"></span>
+                                <span id="headerReservationBadge" class="absolute -right-1 -top-1 hidden min-w-[1.35rem] rounded-full bg-brand-600 px-1.5 py-0.5 text-[0.62rem] font-extrabold text-white ring-2 ring-white">
+                                    0
+                                </span>
                                 <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                     <path d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5"></path>
                                     <path d="M10 17a2 2 0 0 0 4 0"></path>
@@ -95,8 +97,13 @@
                                 <div class="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-brand-300 to-brand-600 text-xs font-bold text-white">
                                     AL
                                 </div>
-                                <span class="hidden text-sm font-semibold text-slate-700 sm:inline">
-                                    Aluna
+                                <span class="hidden sm:block">
+                                    <span class="block text-sm font-semibold text-slate-700">
+                                        Aluna
+                                    </span>
+                                    <span id="headerReservationText" class="block text-xs text-slate-500">
+                                        0 reservas ativas
+                                    </span>
                                 </span>
                             </button>
                         </div>
@@ -109,7 +116,7 @@
                     <div class="grid gap-4 xl:grid-cols-[1fr_17rem] xl:items-start">
                         <div class="space-y-5">
                             <div class="space-y-2">
-                                <h1 class="max-w-4xl text-3xl font-extrabold leading-tight tracking-tight text-slate-950 sm:text-[2.25rem]">
+                                <h1 class="max-w-4xl text-3xl font-extrabold leading-tight tracking-tight text-brand-700 sm:text-[2.25rem]">
                                     ENCONTRE UMA SALA DE ESTUDO OU LABORATORIO
                                 </h1>
                                 <p class="max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
@@ -310,6 +317,25 @@
                             <p id="reservationsSummary" class="mt-1 text-sm text-slate-500">
                                 Gerencie suas reservas ativas no painel.
                             </p>
+                            <p class="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+                                Reservas salvas neste navegador
+                            </p>
+                            <div class="mt-4 flex flex-wrap gap-2">
+                                <button
+                                    id="clearReservationsButton"
+                                    type="button"
+                                    class="rounded-xl border border-slate-300 px-3 py-2 text-xs font-bold uppercase tracking-wide text-slate-700 transition hover:border-rose-300 hover:text-rose-600"
+                                >
+                                    Limpar reservas
+                                </button>
+                                <button
+                                    id="restoreDemoButton"
+                                    type="button"
+                                    class="rounded-xl border border-slate-300 px-3 py-2 text-xs font-bold uppercase tracking-wide text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
+                                >
+                                    Restaurar demo
+                                </button>
+                            </div>
                         </div>
 
                         <div class="overflow-hidden rounded-[20px] border border-slate-200">
@@ -490,7 +516,8 @@
             `
         };
 
-        let reservations = [
+        const STORAGE_KEY = "roomEasyStudentReservations";
+        const defaultReservations = [
             {
                 id: "reserva-1",
                 roomId: "sala-3a",
@@ -513,6 +540,7 @@
                 time: "10:00"
             }
         ];
+        let reservations = [];
 
         const roomsGrid = document.getElementById("roomsGrid");
         const roomsCount = document.getElementById("roomsCount");
@@ -529,7 +557,11 @@
         const reservationsTableBody = document.getElementById("reservationsTableBody");
         const reservationsSummary = document.getElementById("reservationsSummary");
         const reservationsEmpty = document.getElementById("reservationsEmpty");
+        const headerReservationBadge = document.getElementById("headerReservationBadge");
+        const headerReservationText = document.getElementById("headerReservationText");
         const clearFiltersButton = document.getElementById("clearFiltersButton");
+        const clearReservationsButton = document.getElementById("clearReservationsButton");
+        const restoreDemoButton = document.getElementById("restoreDemoButton");
         const successAlert = document.getElementById("successAlert");
         const successAlertTitle = document.getElementById("successAlertTitle");
         const successAlertMessage = document.getElementById("successAlertMessage");
@@ -542,6 +574,62 @@
 
         function formatSchedule(startTime, endTime) {
             return `${startTime} - ${endTime}`;
+        }
+
+        function cloneDefaultReservations() {
+            return defaultReservations.map((reservation) => ({ ...reservation }));
+        }
+
+        function isValidReservation(value) {
+            return Boolean(
+                value &&
+                typeof value.id === "string" &&
+                typeof value.roomId === "string" &&
+                typeof value.roomName === "string" &&
+                typeof value.date === "string" &&
+                typeof value.time === "string"
+            );
+        }
+
+        function loadReservations() {
+            try {
+                const storedReservations = window.localStorage.getItem(STORAGE_KEY);
+
+                if (!storedReservations) {
+                    return cloneDefaultReservations();
+                }
+
+                const parsedReservations = JSON.parse(storedReservations);
+
+                if (!Array.isArray(parsedReservations)) {
+                    return cloneDefaultReservations();
+                }
+
+                if (!parsedReservations.length) {
+                    return [];
+                }
+
+                const validReservations = parsedReservations.filter(isValidReservation);
+                return validReservations.length === parsedReservations.length
+                    ? validReservations
+                    : cloneDefaultReservations();
+            } catch (error) {
+                return cloneDefaultReservations();
+            }
+        }
+
+        function saveReservations() {
+            try {
+                window.localStorage.setItem(STORAGE_KEY, JSON.stringify(reservations));
+            } catch (error) {
+                return;
+            }
+        }
+
+        function syncReservationViews() {
+            saveReservations();
+            renderReservations();
+            applyFilters();
         }
 
         function getRequestedDate() {
@@ -646,6 +734,24 @@
             }
 
             reservationsSummary.textContent = `${reservations.length} ${reservations.length === 1 ? "reserva ativa" : "reservas ativas"} no painel.`;
+        }
+
+        function updateHeaderReservationState() {
+            if (headerReservationText) {
+                headerReservationText.textContent = `${reservations.length} ${reservations.length === 1 ? "reserva ativa" : "reservas ativas"}`;
+            }
+
+            if (!headerReservationBadge) {
+                return;
+            }
+
+            if (!reservations.length) {
+                headerReservationBadge.classList.add("hidden");
+                return;
+            }
+
+            headerReservationBadge.textContent = reservations.length > 9 ? "9+" : String(reservations.length);
+            headerReservationBadge.classList.remove("hidden");
         }
 
         function showAlert(type, title, message) {
@@ -760,6 +866,7 @@
             }
 
             updateReservationsSummary();
+            updateHeaderReservationState();
 
             if (!reservations.length) {
                 reservationsTableBody.innerHTML = "";
@@ -819,8 +926,7 @@
             }
 
             reservations = [nextReservation, ...reservations];
-            renderReservations();
-            applyFilters();
+            syncReservationViews();
             showAlert(
                 "success",
                 "Reserva efetuada com sucesso!",
@@ -836,12 +942,31 @@
             }
 
             reservations = reservations.filter((item) => item.id !== reservationId);
-            renderReservations();
-            applyFilters();
+            syncReservationViews();
             showAlert(
                 "success",
                 "Reserva cancelada com sucesso!",
                 `${reservation.roomName} foi removida das suas reservas.`
+            );
+        }
+
+        function clearAllReservations() {
+            reservations = [];
+            syncReservationViews();
+            showAlert(
+                "success",
+                "Reservas removidas.",
+                "Todas as reservas salvas neste navegador foram apagadas."
+            );
+        }
+
+        function restoreDemoReservations() {
+            reservations = cloneDefaultReservations();
+            syncReservationViews();
+            showAlert(
+                "success",
+                "Demo restaurada.",
+                "As reservas de exemplo foram restauradas para continuar os testes."
             );
         }
 
@@ -874,6 +999,7 @@
             renderRooms(getFilteredRooms());
         }
 
+        reservations = loadReservations();
         populateTimeSelect(startTimeFilter, "", "Horario inicial");
         populateTimeSelect(endTimeFilter, "", "Horario final");
 
@@ -909,6 +1035,39 @@
 
                 hideAlerts();
                 applyFilters();
+            });
+        }
+
+        if (clearReservationsButton) {
+            clearReservationsButton.addEventListener("click", function () {
+                if (!reservations.length) {
+                    showAlert(
+                        "error",
+                        "Nenhuma reserva para limpar.",
+                        "A lista de reservas ja esta vazia neste navegador."
+                    );
+                    return;
+                }
+
+                const confirmed = window.confirm("Deseja remover todas as reservas salvas neste navegador?");
+
+                if (!confirmed) {
+                    return;
+                }
+
+                clearAllReservations();
+            });
+        }
+
+        if (restoreDemoButton) {
+            restoreDemoButton.addEventListener("click", function () {
+                const confirmed = window.confirm("Deseja restaurar as reservas de exemplo do painel?");
+
+                if (!confirmed) {
+                    return;
+                }
+
+                restoreDemoReservations();
             });
         }
 
