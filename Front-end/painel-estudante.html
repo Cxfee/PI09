@@ -129,15 +129,48 @@
                         </label>
 
                         <div class="flex items-center justify-end gap-3">
-                            <button type="button" class="relative inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-500 transition hover:border-brand-200 hover:text-brand-700">
-                                <span id="headerReservationBadge" class="absolute -right-1 -top-1 hidden min-w-[1.35rem] rounded-full bg-brand-600 px-1.5 py-0.5 text-[0.62rem] font-extrabold text-white ring-2 ring-white">
-                                    0
-                                </span>
-                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <path d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5"></path>
-                                    <path d="M10 17a2 2 0 0 0 4 0"></path>
-                                </svg>
-                            </button>
+                            <div class="relative">
+                                <button
+                                    id="notificationsButton"
+                                    type="button"
+                                    aria-expanded="false"
+                                    aria-controls="notificationsPanel"
+                                    class="relative inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-500 transition hover:border-brand-200 hover:text-brand-700"
+                                >
+                                    <span id="headerNotificationBadge" class="absolute -right-1 -top-1 hidden min-w-[1.35rem] rounded-full bg-rose-500 px-1.5 py-0.5 text-[0.62rem] font-extrabold text-white ring-2 ring-white">
+                                        0
+                                    </span>
+                                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5"></path>
+                                        <path d="M10 17a2 2 0 0 0 4 0"></path>
+                                    </svg>
+                                </button>
+
+                                <div
+                                    id="notificationsPanel"
+                                    class="absolute right-0 top-14 z-30 hidden w-[20rem] max-w-[calc(100vw-2rem)] overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-soft"
+                                >
+                                    <div class="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+                                        <div>
+                                            <p class="text-sm font-extrabold text-slate-900">Notificacoes</p>
+                                            <p class="text-xs text-slate-500">Acompanhe suas ultimas acoes</p>
+                                        </div>
+                                        <button
+                                            id="markNotificationsReadButton"
+                                            type="button"
+                                            class="text-xs font-bold uppercase tracking-wide text-brand-600 transition hover:text-brand-800"
+                                        >
+                                            Marcar lidas
+                                        </button>
+                                    </div>
+
+                                    <div id="notificationsEmpty" class="px-4 py-5 text-sm text-slate-500">
+                                        Nenhuma notificacao no momento.
+                                    </div>
+
+                                    <div id="notificationsList" class="hidden max-h-80 divide-y divide-slate-100 overflow-y-auto"></div>
+                                </div>
+                            </div>
 
                             <button type="button" class="inline-flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2.5 transition hover:border-brand-200">
                                 <div class="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-brand-300 to-brand-600 text-xs font-bold text-white">
@@ -588,6 +621,7 @@
         };
 
         const STORAGE_KEY = "roomEasyStudentReservations";
+        const NOTIFICATIONS_STORAGE_KEY = "roomEasyStudentNotifications";
         const defaultReservations = [
             {
                 id: "reserva-1",
@@ -612,6 +646,7 @@
             }
         ];
         let reservations = [];
+        let notifications = [];
 
         const roomsGrid = document.getElementById("roomsGrid");
         const roomsCount = document.getElementById("roomsCount");
@@ -635,7 +670,12 @@
         const reservationsTableBody = document.getElementById("reservationsTableBody");
         const reservationsSummary = document.getElementById("reservationsSummary");
         const reservationsEmpty = document.getElementById("reservationsEmpty");
-        const headerReservationBadge = document.getElementById("headerReservationBadge");
+        const notificationsButton = document.getElementById("notificationsButton");
+        const headerNotificationBadge = document.getElementById("headerNotificationBadge");
+        const notificationsPanel = document.getElementById("notificationsPanel");
+        const notificationsList = document.getElementById("notificationsList");
+        const notificationsEmpty = document.getElementById("notificationsEmpty");
+        const markNotificationsReadButton = document.getElementById("markNotificationsReadButton");
         const headerReservationText = document.getElementById("headerReservationText");
         const clearFiltersButton = document.getElementById("clearFiltersButton");
         const clearReservationsButton = document.getElementById("clearReservationsButton");
@@ -666,6 +706,18 @@
                 typeof value.roomName === "string" &&
                 typeof value.date === "string" &&
                 typeof value.time === "string"
+            );
+        }
+
+        function isValidNotification(value) {
+            return Boolean(
+                value &&
+                typeof value.id === "string" &&
+                typeof value.type === "string" &&
+                typeof value.title === "string" &&
+                typeof value.message === "string" &&
+                typeof value.createdAt === "string" &&
+                typeof value.read === "boolean"
             );
         }
 
@@ -704,10 +756,43 @@
             }
         }
 
+        function loadNotifications() {
+            try {
+                const storedNotifications = window.localStorage.getItem(NOTIFICATIONS_STORAGE_KEY);
+
+                if (!storedNotifications) {
+                    return [];
+                }
+
+                const parsedNotifications = JSON.parse(storedNotifications);
+
+                if (!Array.isArray(parsedNotifications)) {
+                    return [];
+                }
+
+                return parsedNotifications.filter(isValidNotification);
+            } catch (error) {
+                return [];
+            }
+        }
+
+        function saveNotifications() {
+            try {
+                window.localStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(notifications));
+            } catch (error) {
+                return;
+            }
+        }
+
         function syncReservationViews() {
             saveReservations();
             renderReservations();
             applyFilters();
+        }
+
+        function syncNotificationViews() {
+            saveNotifications();
+            renderNotifications();
         }
 
         function getRequestedDate() {
@@ -973,18 +1058,145 @@
             if (headerReservationText) {
                 headerReservationText.textContent = `${reservations.length} ${reservations.length === 1 ? "reserva ativa" : "reservas ativas"}`;
             }
+        }
 
-            if (!headerReservationBadge) {
+        function getNotificationAccentClasses(type, isUnread) {
+            const baseClasses = isUnread ? "bg-slate-50" : "bg-white";
+
+            if (type === "success") {
+                return `${baseClasses} text-emerald-700 ring-emerald-100`;
+            }
+
+            if (type === "error") {
+                return `${baseClasses} text-rose-700 ring-rose-100`;
+            }
+
+            return `${baseClasses} text-brand-700 ring-brand-100`;
+        }
+
+        function formatNotificationTimestamp(timestamp) {
+            if (!timestamp) {
+                return "Agora";
+            }
+
+            const date = new Date(timestamp);
+
+            if (Number.isNaN(date.getTime())) {
+                return "Agora";
+            }
+
+            return new Intl.DateTimeFormat("pt-BR", {
+                day: "2-digit",
+                month: "short",
+                hour: "2-digit",
+                minute: "2-digit"
+            }).format(date);
+        }
+
+        function updateHeaderNotificationState() {
+            if (!headerNotificationBadge) {
                 return;
             }
 
-            if (!reservations.length) {
-                headerReservationBadge.classList.add("hidden");
+            const unreadCount = notifications.filter((notification) => !notification.read).length;
+
+            if (!unreadCount) {
+                headerNotificationBadge.classList.add("hidden");
                 return;
             }
 
-            headerReservationBadge.textContent = reservations.length > 9 ? "9+" : String(reservations.length);
-            headerReservationBadge.classList.remove("hidden");
+            headerNotificationBadge.textContent = unreadCount > 9 ? "9+" : String(unreadCount);
+            headerNotificationBadge.classList.remove("hidden");
+        }
+
+        function renderNotifications() {
+            updateHeaderNotificationState();
+
+            if (!notificationsList || !notificationsEmpty) {
+                return;
+            }
+
+            if (!notifications.length) {
+                notificationsList.innerHTML = "";
+                notificationsList.classList.add("hidden");
+                notificationsEmpty.classList.remove("hidden");
+                return;
+            }
+
+            notificationsEmpty.classList.add("hidden");
+            notificationsList.classList.remove("hidden");
+
+            notificationsList.innerHTML = notifications.map((notification) => `
+                <article class="px-4 py-3">
+                    <div class="rounded-2xl px-3 py-3 ring-1 ${getNotificationAccentClasses(notification.type, !notification.read)}">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="space-y-1">
+                                <p class="text-sm font-extrabold text-slate-900">${notification.title}</p>
+                                <p class="text-xs leading-5 text-slate-600">${notification.message}</p>
+                            </div>
+                            ${notification.read ? "" : '<span class="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-rose-500"></span>'}
+                        </div>
+                        <p class="mt-2 text-[0.68rem] font-bold uppercase tracking-wide text-slate-400">
+                            ${formatNotificationTimestamp(notification.createdAt)}
+                        </p>
+                    </div>
+                </article>
+            `).join("");
+        }
+
+        function createNotification(type, title, message) {
+            return {
+                id: `notification-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+                type,
+                title,
+                message,
+                createdAt: new Date().toISOString(),
+                read: false
+            };
+        }
+
+        function addNotification(type, title, message) {
+            notifications = [createNotification(type, title, message), ...notifications].slice(0, 12);
+            syncNotificationViews();
+        }
+
+        function markNotificationsAsRead() {
+            let hasUnreadNotifications = false;
+
+            notifications = notifications.map((notification) => {
+                if (notification.read) {
+                    return notification;
+                }
+
+                hasUnreadNotifications = true;
+                return {
+                    ...notification,
+                    read: true
+                };
+            });
+
+            if (!hasUnreadNotifications) {
+                return;
+            }
+
+            syncNotificationViews();
+        }
+
+        function toggleNotificationsPanel(forceOpen) {
+            if (!notificationsPanel || !notificationsButton) {
+                return;
+            }
+
+            const shouldOpen = typeof forceOpen === "boolean"
+                ? forceOpen
+                : notificationsPanel.classList.contains("hidden");
+
+            notificationsPanel.classList.toggle("hidden", !shouldOpen);
+            notificationsButton.setAttribute("aria-expanded", shouldOpen ? "true" : "false");
+
+            if (shouldOpen) {
+                markNotificationsAsRead();
+            }
         }
 
         function showAlert(type, title, message) {
@@ -1175,6 +1387,11 @@
 
             reservations = [nextReservation, ...reservations];
             syncReservationViews();
+            addNotification(
+                "success",
+                "Reserva efetuada",
+                `${room.name} reservada para ${formatShortDate(nextReservation.date)} as ${nextReservation.time}.`
+            );
             showAlert(
                 "success",
                 "Reserva efetuada com sucesso!",
@@ -1191,6 +1408,11 @@
 
             reservations = reservations.filter((item) => item.id !== reservationId);
             syncReservationViews();
+            addNotification(
+                "info",
+                "Reserva cancelada",
+                `${reservation.roomName} foi cancelada e saiu da sua lista de reservas.`
+            );
             showAlert(
                 "success",
                 "Reserva cancelada com sucesso!",
@@ -1201,6 +1423,11 @@
         function clearAllReservations() {
             reservations = [];
             syncReservationViews();
+            addNotification(
+                "info",
+                "Reservas removidas",
+                "Todas as reservas salvas neste navegador foram apagadas."
+            );
             showAlert(
                 "success",
                 "Reservas removidas.",
@@ -1211,6 +1438,11 @@
         function restoreDemoReservations() {
             reservations = cloneDefaultReservations();
             syncReservationViews();
+            addNotification(
+                "info",
+                "Demo restaurada",
+                "As reservas de exemplo foram restauradas no painel."
+            );
             showAlert(
                 "success",
                 "Demo restaurada.",
@@ -1265,6 +1497,7 @@
         }
 
         reservations = loadReservations();
+        notifications = loadNotifications();
         populateTimeSelect(startTimeFilter, "", "Horario inicial");
         populateTimeSelect(endTimeFilter, "", "Horario final");
         syncRangesFromSelects();
@@ -1405,7 +1638,38 @@
             closeErrorAlert.addEventListener("click", hideAlerts);
         }
 
+        if (notificationsButton) {
+            notificationsButton.addEventListener("click", function (event) {
+                event.stopPropagation();
+                toggleNotificationsPanel();
+            });
+        }
+
+        if (markNotificationsReadButton) {
+            markNotificationsReadButton.addEventListener("click", function (event) {
+                event.stopPropagation();
+                markNotificationsAsRead();
+            });
+        }
+
+        if (notificationsPanel) {
+            notificationsPanel.addEventListener("click", function (event) {
+                event.stopPropagation();
+            });
+        }
+
+        document.addEventListener("click", function () {
+            toggleNotificationsPanel(false);
+        });
+
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape") {
+                toggleNotificationsPanel(false);
+            }
+        });
+
         renderReservations();
+        renderNotifications();
         applyFilters();
     </script>
 </body>
