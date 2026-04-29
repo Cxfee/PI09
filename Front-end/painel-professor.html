@@ -627,7 +627,7 @@
         }
 
         function isValidRequestStatus(value) {
-            return value === "confirmada" || value === "em-analise";
+            return value === "confirmada" || value === "em-analise" || value === "recusada";
         }
 
         function sanitizeRequest(request) {
@@ -754,6 +754,14 @@
                 };
             }
 
+            if (status === "recusada") {
+                return {
+                    label: "Recusada",
+                    cardClass: "border-rose-200 bg-rose-50",
+                    badgeClass: "text-rose-700"
+                };
+            }
+
             return {
                 label: "Em analise",
                 cardClass: "border-amber-200 bg-amber-50",
@@ -859,7 +867,7 @@
 
         function renderHeroAndStats() {
             const confirmedRequests = teacherRequests.filter((request) => request.status === "confirmada");
-            const openRequests = teacherRequests.filter((request) => request.status !== "confirmada");
+            const openRequests = teacherRequests.filter((request) => request.status === "em-analise");
             const activeLabs = getActiveRooms().filter((room) => room.type === "Laboratorio");
             const todayValue = getTodayDateValue();
             const todayClasses = confirmedRequests.filter((request) => request.date === todayValue);
@@ -1119,7 +1127,8 @@
                 request.className.toLowerCase() === className.toLowerCase() &&
                 request.date === dateValue &&
                 request.startTime === startTime &&
-                request.endTime === endTime
+                request.endTime === endTime &&
+                request.status !== "recusada"
             ));
 
             if (duplicatedRequest) {
