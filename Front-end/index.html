@@ -120,6 +120,30 @@
 
                         <div id="loginFeedback" class="hidden rounded-xl border px-4 py-3 text-sm font-semibold"></div>
 
+                        <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                <div>
+                                    <p class="text-[0.7rem] font-extrabold uppercase tracking-[0.16em] text-brand-600">
+                                        Acessos demo
+                                    </p>
+                                    <p class="mt-1 text-sm text-slate-500">
+                                        Entre rapidinho como aluno, professor ou admin.
+                                    </p>
+                                </div>
+                                <div class="flex flex-wrap gap-2">
+                                    <button type="button" data-demo-role="aluno" class="demo-login-button rounded-full border border-brand-200 bg-white px-3 py-2 text-xs font-extrabold uppercase tracking-wide text-brand-700 transition hover:border-brand-400 hover:bg-brand-50">
+                                        Aluno
+                                    </button>
+                                    <button type="button" data-demo-role="professor" class="demo-login-button rounded-full border border-brand-200 bg-white px-3 py-2 text-xs font-extrabold uppercase tracking-wide text-brand-700 transition hover:border-brand-400 hover:bg-brand-50">
+                                        Professor
+                                    </button>
+                                    <button type="button" data-demo-role="admin" class="demo-login-button rounded-full border border-brand-200 bg-white px-3 py-2 text-xs font-extrabold uppercase tracking-wide text-brand-700 transition hover:border-brand-400 hover:bg-brand-50">
+                                        Admin
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
                         <button
                             type="submit"
                             class="w-full rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 px-6 py-3 text-base font-bold text-white shadow-[0_14px_30px_rgba(53,87,235,0.28)] transition duration-200 hover:-translate-y-0.5 hover:from-brand-700 hover:to-brand-600 sm:py-3.5 sm:text-lg"
@@ -140,14 +164,40 @@
     </main>
 
     <script>
-        const REGISTERED_STUDENTS_KEY = "roomEasyRegisteredStudents";
-        const CURRENT_STUDENT_KEY = "roomEasyCurrentStudent";
+        const ACCOUNTS_STORAGE_KEY = "roomEasyAccounts";
+        const LEGACY_REGISTERED_STUDENTS_KEY = "roomEasyRegisteredStudents";
+        const CURRENT_USER_KEY = "roomEasyCurrentUser";
+        const LEGACY_CURRENT_STUDENT_KEY = "roomEasyCurrentStudent";
         const FLASH_MESSAGE_KEY = "roomEasyAuthFlashMessage";
+        const DEMO_ACCOUNTS = [
+            {
+                email: "aluno@roomeasy.com",
+                cpf: "11111111111",
+                name: "Ana Lima",
+                password: "123456",
+                role: "aluno"
+            },
+            {
+                email: "professor@roomeasy.com",
+                cpf: "22222222222",
+                name: "Prof. Carlos Souza",
+                password: "123456",
+                role: "professor"
+            },
+            {
+                email: "admin@roomeasy.com",
+                cpf: "33333333333",
+                name: "Admin RoomEasy",
+                password: "123456",
+                role: "admin"
+            }
+        ];
         const loginForm = document.getElementById("loginForm");
         const loginIdentifierInput = document.getElementById("loginIdentifier");
         const togglePasswordButton = document.getElementById("togglePassword");
         const passwordInput = document.getElementById("password");
         const loginFeedback = document.getElementById("loginFeedback");
+        const demoLoginButtons = document.querySelectorAll(".demo-login-button");
         const openEyeIcon = `
             <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z"></path>
@@ -197,17 +247,72 @@
 
         function loadRegisteredStudents() {
             try {
-                const storedStudents = window.localStorage.getItem(REGISTERED_STUDENTS_KEY);
-                const parsedStudents = storedStudents ? JSON.parse(storedStudents) : [];
-                return Array.isArray(parsedStudents) ? parsedStudents : [];
+                const storedAccounts = window.localStorage.getItem(ACCOUNTS_STORAGE_KEY);
+
+                if (storedAccounts) {
+                    const parsedAccounts = JSON.parse(storedAccounts);
+                    return Array.isArray(parsedAccounts) ? parsedAccounts : [];
+                }
+
+                const legacyStudents = window.localStorage.getItem(LEGACY_REGISTERED_STUDENTS_KEY);
+                const parsedStudents = legacyStudents ? JSON.parse(legacyStudents) : [];
+
+                if (!Array.isArray(parsedStudents)) {
+                    return [];
+                }
+
+                return parsedStudents.map((student) => ({
+                    ...student,
+                    role: student.role || "aluno"
+                }));
             } catch (error) {
                 return [];
             }
         }
 
+        function saveRegisteredStudents(students) {
+            try {
+                window.localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(students));
+            } catch (error) {
+                return [];
+            }
+
+            return students;
+        }
+
+        function ensureDemoAccounts() {
+            const storedStudents = loadRegisteredStudents();
+            const mergedStudents = [...storedStudents];
+
+            DEMO_ACCOUNTS.forEach((demoAccount) => {
+                const alreadyExists = mergedStudents.some((student) => (
+                    student.email === demoAccount.email || student.cpf === demoAccount.cpf
+                ));
+
+                if (!alreadyExists) {
+                    mergedStudents.push({ ...demoAccount });
+                }
+            });
+
+            return saveRegisteredStudents(mergedStudents);
+        }
+
+        function getDashboardPath(role) {
+            if (role === "professor") {
+                return "./painel-professor.html";
+            }
+
+            if (role === "admin") {
+                return "./painel-admin.html";
+            }
+
+            return "./painel-estudante.html";
+        }
+
         function saveCurrentStudent(student) {
             try {
-                window.localStorage.setItem(CURRENT_STUDENT_KEY, JSON.stringify(student));
+                window.localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(student));
+                window.localStorage.removeItem(LEGACY_CURRENT_STUDENT_KEY);
             } catch (error) {
                 return;
             }
@@ -246,6 +351,8 @@
             });
         }
 
+        const registeredStudents = ensureDemoAccounts();
+
         if (loginForm && loginIdentifierInput && passwordInput) {
             loginForm.addEventListener("submit", function (event) {
                 event.preventDefault();
@@ -268,8 +375,6 @@
                     return;
                 }
 
-                const registeredStudents = loadRegisteredStudents();
-
                 if (registeredStudents.length) {
                     const normalizedIdentifier = identifier.toLowerCase();
                     const normalizedCpf = normalizeCpf(identifier);
@@ -286,17 +391,22 @@
                     saveCurrentStudent({
                         name: matchedStudent.name,
                         email: matchedStudent.email,
-                        cpf: matchedStudent.cpf
+                        cpf: matchedStudent.cpf,
+                        role: matchedStudent.role || "aluno"
                     });
+
+                    window.location.href = getDashboardPath(matchedStudent.role || "aluno");
+                    return;
                 } else {
                     saveCurrentStudent({
                         name: getFallbackName(identifier),
                         email: isValidEmail(identifier) ? identifier.toLowerCase() : "",
-                        cpf: normalizeCpf(identifier)
+                        cpf: normalizeCpf(identifier),
+                        role: "aluno"
                     });
                 }
 
-                window.location.href = loginForm.action;
+                window.location.href = getDashboardPath("aluno");
             });
         }
 
@@ -304,6 +414,27 @@
             if (field) {
                 field.addEventListener("input", hideLoginFeedback);
             }
+        });
+
+        demoLoginButtons.forEach((button) => {
+            button.addEventListener("click", function () {
+                const targetRole = button.dataset.demoRole;
+                const demoAccount = registeredStudents.find((student) => student.role === targetRole);
+
+                if (!demoAccount) {
+                    showLoginFeedback("error", "Nao foi possivel localizar a conta demo deste perfil.");
+                    return;
+                }
+
+                saveCurrentStudent({
+                    name: demoAccount.name,
+                    email: demoAccount.email,
+                    cpf: demoAccount.cpf,
+                    role: demoAccount.role
+                });
+
+                window.location.href = getDashboardPath(demoAccount.role);
+            });
         });
 
         consumeFlashMessage();

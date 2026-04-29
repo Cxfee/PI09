@@ -120,6 +120,21 @@
                         </label>
 
                         <label class="block">
+                            <span class="mb-2 block text-xs font-extrabold uppercase tracking-[0.16em] text-slate-500">
+                                Perfil de acesso
+                            </span>
+                            <select
+                                id="signupRole"
+                                name="role"
+                                class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-base text-slate-700 shadow-field outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100 sm:px-5 sm:text-lg"
+                            >
+                                <option value="aluno">Aluno</option>
+                                <option value="professor">Professor</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </label>
+
+                        <label class="block">
                             <span class="sr-only">Digite sua senha</span>
                             <div class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3.5 shadow-field transition duration-200 focus-within:border-brand-400 focus-within:ring-4 focus-within:ring-brand-100 sm:gap-4 sm:px-5 sm:py-4">
                                 <svg class="h-6 w-6 shrink-0 text-slate-400 sm:h-7 sm:w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -171,12 +186,37 @@
     </main>
 
     <script>
-        const REGISTERED_STUDENTS_KEY = "roomEasyRegisteredStudents";
+        const ACCOUNTS_STORAGE_KEY = "roomEasyAccounts";
+        const LEGACY_REGISTERED_STUDENTS_KEY = "roomEasyRegisteredStudents";
         const FLASH_MESSAGE_KEY = "roomEasyAuthFlashMessage";
+        const DEMO_ACCOUNTS = [
+            {
+                email: "aluno@roomeasy.com",
+                cpf: "11111111111",
+                name: "Ana Lima",
+                password: "123456",
+                role: "aluno"
+            },
+            {
+                email: "professor@roomeasy.com",
+                cpf: "22222222222",
+                name: "Prof. Carlos Souza",
+                password: "123456",
+                role: "professor"
+            },
+            {
+                email: "admin@roomeasy.com",
+                cpf: "33333333333",
+                name: "Admin RoomEasy",
+                password: "123456",
+                role: "admin"
+            }
+        ];
         const signupForm = document.getElementById("signupForm");
         const signupEmailInput = document.getElementById("signupEmail");
         const signupCpfInput = document.getElementById("signupCpf");
         const signupNameInput = document.getElementById("signupName");
+        const signupRoleInput = document.getElementById("signupRole");
         const togglePasswordButton = document.getElementById("togglePassword");
         const passwordInput = document.getElementById("signupPassword");
         const signupFeedback = document.getElementById("signupFeedback");
@@ -225,9 +265,24 @@
 
         function loadRegisteredStudents() {
             try {
-                const storedStudents = window.localStorage.getItem(REGISTERED_STUDENTS_KEY);
-                const parsedStudents = storedStudents ? JSON.parse(storedStudents) : [];
-                return Array.isArray(parsedStudents) ? parsedStudents : [];
+                const storedAccounts = window.localStorage.getItem(ACCOUNTS_STORAGE_KEY);
+
+                if (storedAccounts) {
+                    const parsedAccounts = JSON.parse(storedAccounts);
+                    return Array.isArray(parsedAccounts) ? parsedAccounts : [];
+                }
+
+                const legacyStudents = window.localStorage.getItem(LEGACY_REGISTERED_STUDENTS_KEY);
+                const parsedStudents = legacyStudents ? JSON.parse(legacyStudents) : [];
+
+                if (!Array.isArray(parsedStudents)) {
+                    return [];
+                }
+
+                return parsedStudents.map((student) => ({
+                    ...student,
+                    role: student.role || "aluno"
+                }));
             } catch (error) {
                 return [];
             }
@@ -235,12 +290,30 @@
 
         function saveRegisteredStudents(students) {
             try {
-                window.localStorage.setItem(REGISTERED_STUDENTS_KEY, JSON.stringify(students));
+                window.localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(students));
             } catch (error) {
                 return false;
             }
 
             return true;
+        }
+
+        function ensureDemoAccounts() {
+            const storedStudents = loadRegisteredStudents();
+            const mergedStudents = [...storedStudents];
+
+            DEMO_ACCOUNTS.forEach((demoAccount) => {
+                const alreadyExists = mergedStudents.some((student) => (
+                    student.email === demoAccount.email || student.cpf === demoAccount.cpf
+                ));
+
+                if (!alreadyExists) {
+                    mergedStudents.push({ ...demoAccount });
+                }
+            });
+
+            saveRegisteredStudents(mergedStudents);
+            return mergedStudents;
         }
 
         if (togglePasswordButton && passwordInput) {
@@ -252,13 +325,16 @@
             });
         }
 
-        if (signupForm && signupEmailInput && signupCpfInput && signupNameInput && passwordInput) {
+        let registeredStudents = ensureDemoAccounts();
+
+        if (signupForm && signupEmailInput && signupCpfInput && signupNameInput && signupRoleInput && passwordInput) {
             signupForm.addEventListener("submit", function (event) {
                 event.preventDefault();
 
                 const email = signupEmailInput.value.trim().toLowerCase();
                 const cpf = normalizeCpf(signupCpfInput.value);
                 const name = signupNameInput.value.trim();
+                const role = signupRoleInput.value;
                 const password = passwordInput.value.trim();
 
                 if (!email || !cpf || !name || !password) {
@@ -286,7 +362,6 @@
                     return;
                 }
 
-                const registeredStudents = loadRegisteredStudents();
                 const duplicatedStudent = registeredStudents.find((student) => (
                     student.email === email || student.cpf === cpf
                 ));
@@ -302,7 +377,8 @@
                         email,
                         cpf,
                         name,
-                        password
+                        password,
+                        role
                     }
                 ];
 
@@ -313,8 +389,11 @@
                     return;
                 }
 
+                registeredStudents = nextStudents;
+
                 try {
-                    window.sessionStorage.setItem(FLASH_MESSAGE_KEY, "Conta criada com sucesso. Faca login para entrar no painel.");
+                    const roleLabel = role === "admin" ? "admin" : role === "professor" ? "professor" : "aluno";
+                    window.sessionStorage.setItem(FLASH_MESSAGE_KEY, `Conta de ${roleLabel} criada com sucesso. Faca login para entrar no painel.`);
                 } catch (error) {
                     // Keep the signup flow working even if the flash message cannot be saved.
                 }
@@ -327,7 +406,7 @@
             });
         }
 
-        [signupEmailInput, signupCpfInput, signupNameInput, passwordInput].forEach((field) => {
+        [signupEmailInput, signupCpfInput, signupNameInput, signupRoleInput, passwordInput].forEach((field) => {
             if (field) {
                 field.addEventListener("input", hideSignupFeedback);
             }
