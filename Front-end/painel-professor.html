@@ -836,6 +836,27 @@
             `;
         }
 
+        function selectRoomForRequest(roomId, options = {}) {
+            if (!roomSelect || !roomId) {
+                return;
+            }
+
+            const shouldFocusForm = options.focusForm !== false;
+            const roomExists = Array.from(roomSelect.options).some((option) => option.value === roomId);
+
+            if (!roomExists) {
+                return;
+            }
+
+            roomSelect.value = roomId;
+            renderAvailableRooms();
+
+            if (shouldFocusForm) {
+                requestFormSection?.scrollIntoView({ behavior: "smooth", block: "start" });
+                classNameInput?.focus();
+            }
+        }
+
         function renderHeroAndStats() {
             const confirmedRequests = teacherRequests.filter((request) => request.status === "confirmada");
             const openRequests = teacherRequests.filter((request) => request.status !== "confirmada");
@@ -913,6 +934,7 @@
             }
 
             const activeRooms = getActiveRooms().sort((firstRoom, secondRoom) => firstRoom.name.localeCompare(secondRoom.name));
+            const selectedRoomId = roomSelect?.value || "";
 
             if (!activeRooms.length) {
                 availableRoomsGrid.innerHTML = `
@@ -925,9 +947,16 @@
 
             availableRoomsGrid.innerHTML = activeRooms.map((room) => {
                 const relatedStudentReservations = studentReservations.filter((reservation) => reservation.roomId === room.id).length;
+                const isSelected = selectedRoomId === room.id;
+                const cardClass = isSelected
+                    ? "rounded-2xl border border-brand-300 bg-brand-50/70 px-4 py-4 shadow-sm ring-2 ring-brand-100"
+                    : "rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 transition hover:border-brand-200 hover:bg-white";
+                const buttonClass = isSelected
+                    ? "rounded-xl bg-brand-600 px-3 py-2 text-[0.68rem] font-extrabold uppercase tracking-wide text-white"
+                    : "rounded-xl border border-slate-300 bg-white px-3 py-2 text-[0.68rem] font-extrabold uppercase tracking-wide text-slate-700 transition hover:border-brand-300 hover:text-brand-700";
 
                 return `
-                    <article class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                    <article class="${cardClass}">
                         <div class="flex items-start justify-between gap-3">
                             <div>
                                 <p class="text-sm font-bold text-slate-900">${room.name}</p>
@@ -941,6 +970,13 @@
                         <p class="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
                             ${relatedStudentReservations} reserva(s) de alunos neste navegador
                         </p>
+                        <button
+                            type="button"
+                            data-select-room-id="${room.id}"
+                            class="mt-3 ${buttonClass}"
+                        >
+                            ${isSelected ? "Sala selecionada" : "Usar esta sala"}
+                        </button>
                     </article>
                 `;
             }).join("");
@@ -1015,6 +1051,7 @@
             }
 
             populateRoomOptions();
+            renderAvailableRooms();
         }
 
         function buildRequestId(ownerKey) {
@@ -1183,6 +1220,24 @@
 
         if (teacherRequestForm) {
             teacherRequestForm.addEventListener("submit", handleCreateRequest);
+        }
+
+        if (roomSelect) {
+            roomSelect.addEventListener("change", function () {
+                renderAvailableRooms();
+            });
+        }
+
+        if (availableRoomsGrid) {
+            availableRoomsGrid.addEventListener("click", function (event) {
+                const target = event.target.closest("[data-select-room-id]");
+
+                if (!target) {
+                    return;
+                }
+
+                selectRoomForRequest(target.dataset.selectRoomId);
+            });
         }
 
         if (newRequestButton && requestFormSection) {
