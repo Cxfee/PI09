@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RoomEasy | Painel Administrativo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: "#f4f7ff",
+                            100: "#e7eeff",
+                            200: "#cfdcff",
+                            300: "#a9c1ff",
+                            400: "#789bff",
+                            500: "#4f73ff",
+                            600: "#3557eb",
+                            700: "#1e3aa8",
+                            800: "#162a78"
+                        }
+                    },
+                    boxShadow: {
+                        panel: "0 30px 80px rgba(30, 58, 168, 0.14)",
+                        field: "0 10px 30px rgba(15, 23, 42, 0.08)"
+                    }
+                }
+            }
+        };
+    </script>
+    <style type="text/tailwindcss">
+        @layer base {
+            body {
+                font-family: "Plus Jakarta Sans", sans-serif;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen overflow-x-hidden bg-[radial-gradient(circle_at_top,_#edf4ff_0,_#f7faff_35%,_#eff5ff_100%)] text-slate-900">
+    <main class="mx-auto min-h-screen max-w-[1180px] px-4 py-5 sm:px-6 sm:py-8">
+        <div class="overflow-hidden rounded-[30px] border border-white/80 bg-white shadow-panel">
+            <header class="border-b border-slate-200 px-5 py-4 sm:px-6 lg:px-8">
+                <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-100 text-brand-700">
+                            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M3 10.5 12 4l9 6.5"></path>
+                                <path d="M5 9.8V20h14V9.8"></path>
+                                <path d="M9 20v-5h6v5"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-lg font-extrabold tracking-tight text-brand-700">RoomEasy</p>
+                            <p class="text-sm text-slate-500">Painel administrativo</p>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center justify-end gap-3">
+                        <div class="inline-flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2.5">
+                            <div id="adminInitials" class="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-brand-300 to-brand-600 text-xs font-bold text-white">
+                                AD
+                            </div>
+                            <span class="hidden sm:block">
+                                <span id="adminName" class="block text-sm font-semibold text-slate-700">Admin RoomEasy</span>
+                                <span class="block text-xs text-slate-500">Perfil administrador</span>
+                            </span>
+                        </div>
+
+                        <button
+                            id="logoutButton"
+                            type="button"
+                            class="inline-flex h-11 items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 transition hover:border-rose-200 hover:text-rose-600"
+                        >
+                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                <path d="m16 17 5-5-5-5"></path>
+                                <path d="M21 12H9"></path>
+                            </svg>
+                            <span class="hidden sm:inline">Sair</span>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="space-y-6 px-5 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
+                <section class="rounded-[28px] border border-slate-200 bg-[linear-gradient(135deg,_#f7faff_0%,_#eef4ff_100%)] p-5 shadow-field sm:p-6">
+                    <p class="text-xs font-extrabold uppercase tracking-[0.16em] text-brand-600">
+                        Controle geral
+                    </p>
+                    <h1 class="mt-3 text-3xl font-extrabold tracking-tight text-brand-700 sm:text-4xl">
+                        Gerencie salas, usu&aacute;rios e reservas do sistema
+                    </h1>
+                    <p class="mt-3 max-w-3xl text-sm leading-6 text-slate-600 sm:text-base">
+                        Monitore os espa&ccedil;os acad&ecirc;micos, acompanhe os cadastros recentes e visualize rapidamente os pontos de maior demanda no RoomEasy.
+                    </p>
+
+                    <div class="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                        <article class="rounded-2xl border border-white/80 bg-white p-4 shadow-sm">
+                            <p class="text-xs font-extrabold uppercase tracking-[0.12em] text-slate-500">Salas ativas</p>
+                            <p class="mt-3 text-3xl font-extrabold text-slate-950">18</p>
+                            <p class="mt-2 text-sm text-slate-500">Entre salas de estudo, reuni&atilde;o e laborat&oacute;rios.</p>
+                        </article>
+                        <article class="rounded-2xl border border-white/80 bg-white p-4 shadow-sm">
+                            <p class="text-xs font-extrabold uppercase tracking-[0.12em] text-slate-500">Usu&aacute;rios cadastrados</p>
+                            <p class="mt-3 text-3xl font-extrabold text-slate-950">124</p>
+                            <p class="mt-2 text-sm text-slate-500">Somando alunos, professores e administradores.</p>
+                        </article>
+                        <article class="rounded-2xl border border-white/80 bg-white p-4 shadow-sm">
+                            <p class="text-xs font-extrabold uppercase tracking-[0.12em] text-slate-500">Reservas hoje</p>
+                            <p class="mt-3 text-3xl font-extrabold text-slate-950">36</p>
+                            <p class="mt-2 text-sm text-slate-500">Pico concentrado entre 13:00 e 18:00.</p>
+                        </article>
+                        <article class="rounded-2xl border border-white/80 bg-white p-4 shadow-sm">
+                            <p class="text-xs font-extrabold uppercase tracking-[0.12em] text-slate-500">Salas em revis&atilde;o</p>
+                            <p class="mt-3 text-3xl font-extrabold text-slate-950">02</p>
+                            <p class="mt-2 text-sm text-slate-500">Bloqueadas para verifica&ccedil;&atilde;o t&eacute;cnica.</p>
+                        </article>
+                    </div>
+                </section>
+
+                <div class="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+                    <section class="space-y-6">
+                        <section class="rounded-[24px] border border-slate-200 bg-white p-4 shadow-field sm:p-5">
+                            <div class="mb-4">
+                                <h2 class="text-[1.55rem] font-extrabold tracking-tight text-slate-950">SALAS MONITORADAS</h2>
+                                <p class="mt-1 text-sm text-slate-500">Status atual dos espa&ccedil;os acad&ecirc;micos.</p>
+                            </div>
+
+                            <div class="overflow-hidden rounded-[20px] border border-slate-200">
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full divide-y divide-slate-200 text-left">
+                                        <thead class="bg-slate-50">
+                                            <tr class="text-[0.7rem] font-extrabold uppercase tracking-[0.12em] text-slate-600">
+                                                <th class="px-3 py-3">Sala</th>
+                                                <th class="px-3 py-3">Tipo</th>
+                                                <th class="px-3 py-3">Status</th>
+                                                <th class="px-3 py-3">Capacidade</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-slate-100 bg-white text-sm text-slate-700">
+                                            <tr>
+                                                <td class="px-3 py-4 font-semibold">Sala de Estudos 3A</td>
+                                                <td class="px-3 py-4">Estudo</td>
+                                                <td class="px-3 py-4"><span class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-extrabold uppercase tracking-wide text-emerald-700">Ativa</span></td>
+                                                <td class="px-3 py-4">4</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="px-3 py-4 font-semibold">Laborat&oacute;rio de Biologia 2</td>
+                                                <td class="px-3 py-4">Laborat&oacute;rio</td>
+                                                <td class="px-3 py-4"><span class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-extrabold uppercase tracking-wide text-emerald-700">Ativa</span></td>
+                                                <td class="px-3 py-4">12</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="px-3 py-4 font-semibold">Laborat&oacute;rio de Inform&aacute;tica 1</td>
+                                                <td class="px-3 py-4">Laborat&oacute;rio</td>
+                                                <td class="px-3 py-4"><span class="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-extrabold uppercase tracking-wide text-amber-700">Revis&atilde;o</span></td>
+                                                <td class="px-3 py-4">20</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="rounded-[24px] border border-slate-200 bg-white p-4 shadow-field sm:p-5">
+                            <div class="mb-4">
+                                <h2 class="text-[1.55rem] font-extrabold tracking-tight text-slate-950">USU&Aacute;RIOS RECENTES</h2>
+                                <p class="mt-1 text-sm text-slate-500">Contas cadastradas ou atualizadas no sistema.</p>
+                            </div>
+
+                            <div class="grid gap-3 sm:grid-cols-2">
+                                <article class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                                    <p class="text-sm font-bold text-slate-900">Ana Lima</p>
+                                    <p class="mt-1 text-sm text-slate-500">Perfil aluno</p>
+                                </article>
+                                <article class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                                    <p class="text-sm font-bold text-slate-900">Prof. Carlos Souza</p>
+                                    <p class="mt-1 text-sm text-slate-500">Perfil professor</p>
+                                </article>
+                            </div>
+                        </section>
+                    </section>
+
+                    <aside class="space-y-6">
+                        <section class="rounded-[24px] border border-slate-200 bg-white p-4 shadow-field sm:p-5">
+                            <h2 class="text-[1.4rem] font-extrabold tracking-tight text-slate-950">A&Ccedil;&Otilde;ES R&Aacute;PIDAS</h2>
+                            <div class="mt-4 grid gap-3">
+                                <button class="rounded-2xl border border-brand-200 bg-brand-50 px-4 py-3 text-left text-sm font-bold text-brand-700 transition hover:border-brand-400 hover:bg-white">
+                                    Cadastrar nova sala
+                                </button>
+                                <button class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-sm font-bold text-slate-700 transition hover:border-brand-300 hover:text-brand-700">
+                                    Revisar reservas pendentes
+                                </button>
+                                <button class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-sm font-bold text-slate-700 transition hover:border-brand-300 hover:text-brand-700">
+                                    Exportar relat&oacute;rio do dia
+                                </button>
+                            </div>
+                        </section>
+
+                        <section class="rounded-[24px] border border-slate-200 bg-white p-4 shadow-field sm:p-5">
+                            <h2 class="text-[1.4rem] font-extrabold tracking-tight text-slate-950">ALERTAS DO SISTEMA</h2>
+                            <div class="mt-4 space-y-3">
+                                <article class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3">
+                                    <p class="text-xs font-extrabold uppercase tracking-wide text-rose-700">Aten&ccedil;&atilde;o</p>
+                                    <p class="mt-1 text-sm text-slate-700">Laborat&oacute;rio de Inform&aacute;tica 1 bloqueado para revis&atilde;o.</p>
+                                </article>
+                                <article class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+                                    <p class="text-xs font-extrabold uppercase tracking-wide text-amber-700">Demanda alta</p>
+                                    <p class="mt-1 text-sm text-slate-700">Pico de reservas previsto para o per&iacute;odo da tarde.</p>
+                                </article>
+                                <article class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+                                    <p class="text-xs font-extrabold uppercase tracking-wide text-emerald-700">Tudo certo</p>
+                                    <p class="mt-1 text-sm text-slate-700">Sincroniza&ccedil;&atilde;o local de contas demo atualizada.</p>
+                                </article>
+                            </div>
+                        </section>
+                    </aside>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const CURRENT_USER_KEY = "roomEasyCurrentUser";
+        const LEGACY_CURRENT_STUDENT_KEY = "roomEasyCurrentStudent";
+        const adminInitials = document.getElementById("adminInitials");
+        const adminName = document.getElementById("adminName");
+        const logoutButton = document.getElementById("logoutButton");
+
+        function loadCurrentUser() {
+            try {
+                const storedUser = window.localStorage.getItem(CURRENT_USER_KEY) || window.localStorage.getItem(LEGACY_CURRENT_STUDENT_KEY);
+                return storedUser ? JSON.parse(storedUser) : null;
+            } catch (error) {
+                return null;
+            }
+        }
+
+        function getDashboardPath(role) {
+            if (role === "professor") {
+                return "./painel-professor.html";
+            }
+
+            if (role === "aluno") {
+                return "./painel-estudante.html";
+            }
+
+            return "./painel-admin.html";
+        }
+
+        function getDisplayName(user) {
+            if (user?.name && typeof user.name === "string" && user.name.trim()) {
+                return user.name.trim();
+            }
+
+            return "Admin RoomEasy";
+        }
+
+        function getInitials(name) {
+            const parts = name.split(" ").filter(Boolean).slice(0, 2);
+            return parts.length ? parts.map((part) => part.charAt(0).toUpperCase()).join("") : "AD";
+        }
+
+        function updateAdminUI(user) {
+            const displayName = getDisplayName(user);
+
+            if (adminName) {
+                adminName.textContent = displayName;
+            }
+
+            if (adminInitials) {
+                adminInitials.textContent = getInitials(displayName);
+            }
+        }
+
+        function handleLogout() {
+            const confirmed = window.confirm("Deseja sair do painel e voltar para o login?");
+
+            if (!confirmed) {
+                return;
+            }
+
+            try {
+                window.localStorage.removeItem(CURRENT_USER_KEY);
+                window.localStorage.removeItem(LEGACY_CURRENT_STUDENT_KEY);
+            } catch (error) {
+                // Continue to login even if storage is unavailable.
+            }
+
+            window.location.href = "./index.html";
+        }
+
+        const currentUser = loadCurrentUser();
+
+        if (currentUser?.role && currentUser.role !== "admin") {
+            window.location.href = getDashboardPath(currentUser.role);
+        }
+
+        updateAdminUI(currentUser);
+
+        if (logoutButton) {
+            logoutButton.addEventListener("click", handleLogout);
+        }
+    </script>
+</body>
+</html>
