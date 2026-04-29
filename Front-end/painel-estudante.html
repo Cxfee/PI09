@@ -576,7 +576,8 @@
         };
 
         const STORAGE_KEY = "roomEasyStudentReservations";
-        const CURRENT_STUDENT_KEY = "roomEasyCurrentStudent";
+        const CURRENT_USER_KEY = "roomEasyCurrentUser";
+        const LEGACY_CURRENT_STUDENT_KEY = "roomEasyCurrentStudent";
         const NOTIFICATIONS_STORAGE_KEY = "roomEasyStudentNotifications";
         const defaultReservations = [
             {
@@ -654,7 +655,7 @@
 
         function loadCurrentStudent() {
             try {
-                const storedStudent = window.localStorage.getItem(CURRENT_STUDENT_KEY);
+                const storedStudent = window.localStorage.getItem(CURRENT_USER_KEY) || window.localStorage.getItem(LEGACY_CURRENT_STUDENT_KEY);
 
                 if (!storedStudent) {
                     return null;
@@ -1219,7 +1220,8 @@
             }
 
             try {
-                window.localStorage.removeItem(CURRENT_STUDENT_KEY);
+                window.localStorage.removeItem(CURRENT_USER_KEY);
+                window.localStorage.removeItem(LEGACY_CURRENT_STUDENT_KEY);
             } catch (error) {
                 // Continue to the login screen even if storage is unavailable.
             }
