@@ -93,131 +93,205 @@
                         Controle geral
                     </p>
                     <h1 class="mt-3 text-3xl font-extrabold tracking-tight text-brand-700 sm:text-4xl">
-                        Gerencie salas, usu&aacute;rios e reservas do sistema
+                        Gerencie salas, usuarios e reservas do sistema
                     </h1>
                     <p class="mt-3 max-w-3xl text-sm leading-6 text-slate-600 sm:text-base">
-                        Monitore os espa&ccedil;os acad&ecirc;micos, acompanhe os cadastros recentes e visualize rapidamente os pontos de maior demanda no RoomEasy.
+                        Cadastre novos espacos, altere o status das salas e acompanhe o que o estudante enxerga no painel em tempo real.
                     </p>
 
                     <div class="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                         <article class="rounded-2xl border border-white/80 bg-white p-4 shadow-sm">
                             <p class="text-xs font-extrabold uppercase tracking-[0.12em] text-slate-500">Salas ativas</p>
-                            <p class="mt-3 text-3xl font-extrabold text-slate-950">18</p>
-                            <p class="mt-2 text-sm text-slate-500">Entre salas de estudo, reuni&atilde;o e laborat&oacute;rios.</p>
+                            <p id="activeRoomsCount" class="mt-3 text-3xl font-extrabold text-slate-950">0</p>
+                            <p id="activeRoomsDescription" class="mt-2 text-sm text-slate-500">Nenhuma sala ativa carregada.</p>
                         </article>
                         <article class="rounded-2xl border border-white/80 bg-white p-4 shadow-sm">
-                            <p class="text-xs font-extrabold uppercase tracking-[0.12em] text-slate-500">Usu&aacute;rios cadastrados</p>
-                            <p class="mt-3 text-3xl font-extrabold text-slate-950">124</p>
-                            <p class="mt-2 text-sm text-slate-500">Somando alunos, professores e administradores.</p>
+                            <p class="text-xs font-extrabold uppercase tracking-[0.12em] text-slate-500">Usuarios cadastrados</p>
+                            <p id="usersCount" class="mt-3 text-3xl font-extrabold text-slate-950">0</p>
+                            <p id="usersDescription" class="mt-2 text-sm text-slate-500">Sem contas sincronizadas.</p>
                         </article>
                         <article class="rounded-2xl border border-white/80 bg-white p-4 shadow-sm">
-                            <p class="text-xs font-extrabold uppercase tracking-[0.12em] text-slate-500">Reservas hoje</p>
-                            <p class="mt-3 text-3xl font-extrabold text-slate-950">36</p>
-                            <p class="mt-2 text-sm text-slate-500">Pico concentrado entre 13:00 e 18:00.</p>
+                            <p class="text-xs font-extrabold uppercase tracking-[0.12em] text-slate-500">Reservas salvas</p>
+                            <p id="reservationsCount" class="mt-3 text-3xl font-extrabold text-slate-950">0</p>
+                            <p id="reservationsDescription" class="mt-2 text-sm text-slate-500">Sem reservas ativas neste navegador.</p>
                         </article>
                         <article class="rounded-2xl border border-white/80 bg-white p-4 shadow-sm">
-                            <p class="text-xs font-extrabold uppercase tracking-[0.12em] text-slate-500">Salas em revis&atilde;o</p>
-                            <p class="mt-3 text-3xl font-extrabold text-slate-950">02</p>
-                            <p class="mt-2 text-sm text-slate-500">Bloqueadas para verifica&ccedil;&atilde;o t&eacute;cnica.</p>
+                            <p class="text-xs font-extrabold uppercase tracking-[0.12em] text-slate-500">Salas em revisao</p>
+                            <p id="reviewRoomsCount" class="mt-3 text-3xl font-extrabold text-slate-950">0</p>
+                            <p id="reviewRoomsDescription" class="mt-2 text-sm text-slate-500">Nenhuma sala aguardando avaliacao.</p>
                         </article>
                     </div>
                 </section>
 
-                <div class="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+                <div id="adminFeedback" class="hidden rounded-[22px] border px-4 py-4 text-sm shadow-sm"></div>
+
+                <div class="grid gap-6 xl:grid-cols-[1.18fr_0.82fr]">
                     <section class="space-y-6">
                         <section class="rounded-[24px] border border-slate-200 bg-white p-4 shadow-field sm:p-5">
-                            <div class="mb-4">
-                                <h2 class="text-[1.55rem] font-extrabold tracking-tight text-slate-950">SALAS MONITORADAS</h2>
-                                <p class="mt-1 text-sm text-slate-500">Status atual dos espa&ccedil;os acad&ecirc;micos.</p>
+                            <div class="mb-4 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                                <div>
+                                    <h2 class="text-[1.55rem] font-extrabold tracking-tight text-slate-950">SALAS MONITORADAS</h2>
+                                    <p class="mt-1 text-sm text-slate-500">As salas cadastradas aqui passam a alimentar o painel do estudante.</p>
+                                </div>
+
+                                <div class="flex flex-wrap gap-2">
+                                    <button
+                                        id="scrollToRoomFormButton"
+                                        type="button"
+                                        class="rounded-xl border border-brand-200 bg-brand-50 px-3 py-2 text-xs font-extrabold uppercase tracking-wide text-brand-700 transition hover:border-brand-400 hover:bg-white"
+                                    >
+                                        Nova sala
+                                    </button>
+                                    <button
+                                        id="restoreRoomsButton"
+                                        type="button"
+                                        class="rounded-xl border border-slate-300 px-3 py-2 text-xs font-extrabold uppercase tracking-wide text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
+                                    >
+                                        Restaurar demo
+                                    </button>
+                                </div>
                             </div>
 
-                            <div class="overflow-hidden rounded-[20px] border border-slate-200">
+                            <div id="roomsTableWrapper" class="overflow-hidden rounded-[20px] border border-slate-200">
                                 <div class="overflow-x-auto">
                                     <table class="min-w-full divide-y divide-slate-200 text-left">
                                         <thead class="bg-slate-50">
                                             <tr class="text-[0.7rem] font-extrabold uppercase tracking-[0.12em] text-slate-600">
                                                 <th class="px-3 py-3">Sala</th>
                                                 <th class="px-3 py-3">Tipo</th>
-                                                <th class="px-3 py-3">Status</th>
+                                                <th class="px-3 py-3">Horario</th>
                                                 <th class="px-3 py-3">Capacidade</th>
+                                                <th class="px-3 py-3">Status</th>
+                                                <th class="px-3 py-3">Acao</th>
                                             </tr>
                                         </thead>
-                                        <tbody class="divide-y divide-slate-100 bg-white text-sm text-slate-700">
-                                            <tr>
-                                                <td class="px-3 py-4 font-semibold">Sala de Estudos 3A</td>
-                                                <td class="px-3 py-4">Estudo</td>
-                                                <td class="px-3 py-4"><span class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-extrabold uppercase tracking-wide text-emerald-700">Ativa</span></td>
-                                                <td class="px-3 py-4">4</td>
-                                            </tr>
-                                            <tr>
-                                                <td class="px-3 py-4 font-semibold">Laborat&oacute;rio de Biologia 2</td>
-                                                <td class="px-3 py-4">Laborat&oacute;rio</td>
-                                                <td class="px-3 py-4"><span class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-extrabold uppercase tracking-wide text-emerald-700">Ativa</span></td>
-                                                <td class="px-3 py-4">12</td>
-                                            </tr>
-                                            <tr>
-                                                <td class="px-3 py-4 font-semibold">Laborat&oacute;rio de Inform&aacute;tica 1</td>
-                                                <td class="px-3 py-4">Laborat&oacute;rio</td>
-                                                <td class="px-3 py-4"><span class="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-extrabold uppercase tracking-wide text-amber-700">Revis&atilde;o</span></td>
-                                                <td class="px-3 py-4">20</td>
-                                            </tr>
-                                        </tbody>
+                                        <tbody id="roomsTableBody" class="divide-y divide-slate-100 bg-white text-sm text-slate-700"></tbody>
                                     </table>
                                 </div>
+                            </div>
+
+                            <div id="roomsEmptyState" class="hidden rounded-[20px] border border-dashed border-slate-300 bg-slate-50 px-6 py-8 text-center">
+                                <p class="text-base font-bold text-slate-700">Nenhuma sala cadastrada.</p>
+                                <p class="mt-2 text-sm text-slate-500">Use o formulario ao lado para criar o primeiro espaco do catalogo.</p>
                             </div>
                         </section>
 
                         <section class="rounded-[24px] border border-slate-200 bg-white p-4 shadow-field sm:p-5">
                             <div class="mb-4">
-                                <h2 class="text-[1.55rem] font-extrabold tracking-tight text-slate-950">USU&Aacute;RIOS RECENTES</h2>
-                                <p class="mt-1 text-sm text-slate-500">Contas cadastradas ou atualizadas no sistema.</p>
+                                <h2 class="text-[1.55rem] font-extrabold tracking-tight text-slate-950">USUARIOS RECENTES</h2>
+                                <p class="mt-1 text-sm text-slate-500">Contas encontradas na autenticacao local do prototipo.</p>
+                                <p id="userRoleSummary" class="mt-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+                                    Nenhum usuario sincronizado.
+                                </p>
                             </div>
 
-                            <div class="grid gap-3 sm:grid-cols-2">
-                                <article class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-                                    <p class="text-sm font-bold text-slate-900">Ana Lima</p>
-                                    <p class="mt-1 text-sm text-slate-500">Perfil aluno</p>
-                                </article>
-                                <article class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-                                    <p class="text-sm font-bold text-slate-900">Prof. Carlos Souza</p>
-                                    <p class="mt-1 text-sm text-slate-500">Perfil professor</p>
-                                </article>
-                            </div>
+                            <div id="recentUsersGrid" class="grid gap-3 sm:grid-cols-2"></div>
                         </section>
                     </section>
 
                     <aside class="space-y-6">
+                        <section id="roomFormSection" class="rounded-[24px] border border-slate-200 bg-white p-4 shadow-field sm:p-5">
+                            <h2 class="text-[1.4rem] font-extrabold tracking-tight text-slate-950">CADASTRAR NOVA SALA</h2>
+                            <p class="mt-1 text-sm text-slate-500">Preencha os campos abaixo para liberar uma nova opcao de reserva no painel do aluno.</p>
+
+                            <form id="roomForm" class="mt-4 grid gap-3">
+                                <label class="block">
+                                    <span class="mb-2 block text-[0.72rem] font-extrabold uppercase tracking-[0.12em] text-slate-700">Nome da sala</span>
+                                    <input
+                                        id="roomNameInput"
+                                        type="text"
+                                        placeholder="Ex.: Sala de Estudos 4C"
+                                        class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100"
+                                    >
+                                </label>
+
+                                <div class="grid gap-3 sm:grid-cols-2">
+                                    <label class="block">
+                                        <span class="mb-2 block text-[0.72rem] font-extrabold uppercase tracking-[0.12em] text-slate-700">Tipo</span>
+                                        <select
+                                            id="roomTypeInput"
+                                            class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100"
+                                        >
+                                            <option value="Sala de Estudo">Sala de Estudo</option>
+                                            <option value="Laboratorio">Laboratorio</option>
+                                        </select>
+                                    </label>
+
+                                    <label class="block">
+                                        <span class="mb-2 block text-[0.72rem] font-extrabold uppercase tracking-[0.12em] text-slate-700">Capacidade</span>
+                                        <input
+                                            id="roomCapacityInput"
+                                            type="number"
+                                            min="1"
+                                            max="99"
+                                            value="4"
+                                            class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100"
+                                        >
+                                    </label>
+                                </div>
+
+                                <div class="grid gap-3 sm:grid-cols-3">
+                                    <label class="block">
+                                        <span class="mb-2 block text-[0.72rem] font-extrabold uppercase tracking-[0.12em] text-slate-700">Horario inicial</span>
+                                        <select
+                                            id="roomStartTimeInput"
+                                            class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100"
+                                        ></select>
+                                    </label>
+
+                                    <label class="block">
+                                        <span class="mb-2 block text-[0.72rem] font-extrabold uppercase tracking-[0.12em] text-slate-700">Horario final</span>
+                                        <select
+                                            id="roomEndTimeInput"
+                                            class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100"
+                                        ></select>
+                                    </label>
+
+                                    <label class="block">
+                                        <span class="mb-2 block text-[0.72rem] font-extrabold uppercase tracking-[0.12em] text-slate-700">Status inicial</span>
+                                        <select
+                                            id="roomStatusInput"
+                                            class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100"
+                                        >
+                                            <option value="ativa">Ativa</option>
+                                            <option value="revisao">Em revisao</option>
+                                            <option value="bloqueada">Bloqueada</option>
+                                        </select>
+                                    </label>
+                                </div>
+
+                                <label class="block">
+                                    <span class="mb-2 block text-[0.72rem] font-extrabold uppercase tracking-[0.12em] text-slate-700">Visual do card</span>
+                                    <select
+                                        id="roomIllustrationInput"
+                                        class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100"
+                                    >
+                                        <option value="study">Sala de estudo compacta</option>
+                                        <option value="study-wide">Sala de estudo ampla</option>
+                                        <option value="bio">Laboratorio de biologia</option>
+                                        <option value="informatics">Laboratorio de informatica</option>
+                                        <option value="maker">Laboratorio maker</option>
+                                        <option value="meeting">Sala de reuniao</option>
+                                    </select>
+                                </label>
+
+                                <button
+                                    type="submit"
+                                    class="mt-2 rounded-2xl bg-brand-600 px-5 py-3 text-sm font-extrabold uppercase tracking-wide text-white transition hover:bg-brand-700"
+                                >
+                                    Salvar sala
+                                </button>
+                            </form>
+                        </section>
+
                         <section class="rounded-[24px] border border-slate-200 bg-white p-4 shadow-field sm:p-5">
-                            <h2 class="text-[1.4rem] font-extrabold tracking-tight text-slate-950">A&Ccedil;&Otilde;ES R&Aacute;PIDAS</h2>
-                            <div class="mt-4 grid gap-3">
-                                <button class="rounded-2xl border border-brand-200 bg-brand-50 px-4 py-3 text-left text-sm font-bold text-brand-700 transition hover:border-brand-400 hover:bg-white">
-                                    Cadastrar nova sala
-                                </button>
-                                <button class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-sm font-bold text-slate-700 transition hover:border-brand-300 hover:text-brand-700">
-                                    Revisar reservas pendentes
-                                </button>
-                                <button class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-sm font-bold text-slate-700 transition hover:border-brand-300 hover:text-brand-700">
-                                    Exportar relat&oacute;rio do dia
-                                </button>
-                            </div>
+                            <h2 class="text-[1.4rem] font-extrabold tracking-tight text-slate-950">RESERVAS SALVAS</h2>
+                            <div id="reservationsOverview" class="mt-4 space-y-3"></div>
                         </section>
 
                         <section class="rounded-[24px] border border-slate-200 bg-white p-4 shadow-field sm:p-5">
                             <h2 class="text-[1.4rem] font-extrabold tracking-tight text-slate-950">ALERTAS DO SISTEMA</h2>
-                            <div class="mt-4 space-y-3">
-                                <article class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3">
-                                    <p class="text-xs font-extrabold uppercase tracking-wide text-rose-700">Aten&ccedil;&atilde;o</p>
-                                    <p class="mt-1 text-sm text-slate-700">Laborat&oacute;rio de Inform&aacute;tica 1 bloqueado para revis&atilde;o.</p>
-                                </article>
-                                <article class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
-                                    <p class="text-xs font-extrabold uppercase tracking-wide text-amber-700">Demanda alta</p>
-                                    <p class="mt-1 text-sm text-slate-700">Pico de reservas previsto para o per&iacute;odo da tarde.</p>
-                                </article>
-                                <article class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3">
-                                    <p class="text-xs font-extrabold uppercase tracking-wide text-emerald-700">Tudo certo</p>
-                                    <p class="mt-1 text-sm text-slate-700">Sincroniza&ccedil;&atilde;o local de contas demo atualizada.</p>
-                                </article>
-                            </div>
+                            <div id="systemAlertsList" class="mt-4 space-y-3"></div>
                         </section>
                     </aside>
                 </div>
@@ -228,9 +302,146 @@
     <script>
         const CURRENT_USER_KEY = "roomEasyCurrentUser";
         const LEGACY_CURRENT_STUDENT_KEY = "roomEasyCurrentStudent";
+        const ACCOUNTS_STORAGE_KEY = "roomEasyAccounts";
+        const LEGACY_REGISTERED_STUDENTS_KEY = "roomEasyRegisteredStudents";
+        const RESERVATIONS_STORAGE_KEY = "roomEasyStudentReservations";
+        const ROOMS_STORAGE_KEY = "roomEasyManagedRooms";
+        const DEMO_ACCOUNTS = [
+            {
+                email: "aluno@roomeasy.com",
+                cpf: "11111111111",
+                name: "Ana Lima",
+                password: "123456",
+                role: "aluno"
+            },
+            {
+                email: "professor@roomeasy.com",
+                cpf: "22222222222",
+                name: "Prof. Carlos Souza",
+                password: "123456",
+                role: "professor"
+            },
+            {
+                email: "admin@roomeasy.com",
+                cpf: "33333333333",
+                name: "Admin RoomEasy",
+                password: "123456",
+                role: "admin"
+            }
+        ];
+        const DEFAULT_ROOMS = [
+            {
+                id: "sala-3a",
+                name: "Sala de Estudos 3A",
+                type: "Sala de Estudo",
+                capacity: 4,
+                startTime: "13:00",
+                endTime: "22:00",
+                illustration: "study",
+                status: "ativa"
+            },
+            {
+                id: "bio-2",
+                name: "Laboratorio de Biologia 2",
+                type: "Laboratorio",
+                capacity: 4,
+                startTime: "12:00",
+                endTime: "22:00",
+                illustration: "bio",
+                status: "ativa"
+            },
+            {
+                id: "maker-1",
+                name: "Laboratorio Maker 1",
+                type: "Laboratorio",
+                capacity: 8,
+                startTime: "10:00",
+                endTime: "20:00",
+                illustration: "maker",
+                status: "ativa"
+            },
+            {
+                id: "sala-2b",
+                name: "Sala de Estudos 2B",
+                type: "Sala de Estudo",
+                capacity: 6,
+                startTime: "09:00",
+                endTime: "21:00",
+                illustration: "study-wide",
+                status: "ativa"
+            },
+            {
+                id: "reuniao-1c",
+                name: "Sala de Reuniao 1C",
+                type: "Sala de Estudo",
+                capacity: 8,
+                startTime: "08:00",
+                endTime: "18:00",
+                illustration: "meeting",
+                status: "ativa"
+            },
+            {
+                id: "info-4",
+                name: "Laboratorio de Informatica 4",
+                type: "Laboratorio",
+                capacity: 12,
+                startTime: "07:00",
+                endTime: "19:00",
+                illustration: "informatics",
+                status: "ativa"
+            }
+        ];
+        const timeOptions = [
+            "07:00",
+            "08:00",
+            "09:00",
+            "10:00",
+            "11:00",
+            "12:00",
+            "13:00",
+            "14:00",
+            "15:00",
+            "16:00",
+            "17:00",
+            "18:00",
+            "19:00",
+            "20:00",
+            "21:00",
+            "22:00"
+        ];
         const adminInitials = document.getElementById("adminInitials");
         const adminName = document.getElementById("adminName");
         const logoutButton = document.getElementById("logoutButton");
+        const activeRoomsCount = document.getElementById("activeRoomsCount");
+        const activeRoomsDescription = document.getElementById("activeRoomsDescription");
+        const usersCount = document.getElementById("usersCount");
+        const usersDescription = document.getElementById("usersDescription");
+        const reservationsCount = document.getElementById("reservationsCount");
+        const reservationsDescription = document.getElementById("reservationsDescription");
+        const reviewRoomsCount = document.getElementById("reviewRoomsCount");
+        const reviewRoomsDescription = document.getElementById("reviewRoomsDescription");
+        const adminFeedback = document.getElementById("adminFeedback");
+        const roomsTableWrapper = document.getElementById("roomsTableWrapper");
+        const roomsTableBody = document.getElementById("roomsTableBody");
+        const roomsEmptyState = document.getElementById("roomsEmptyState");
+        const restoreRoomsButton = document.getElementById("restoreRoomsButton");
+        const scrollToRoomFormButton = document.getElementById("scrollToRoomFormButton");
+        const roomFormSection = document.getElementById("roomFormSection");
+        const roomForm = document.getElementById("roomForm");
+        const roomNameInput = document.getElementById("roomNameInput");
+        const roomTypeInput = document.getElementById("roomTypeInput");
+        const roomCapacityInput = document.getElementById("roomCapacityInput");
+        const roomStartTimeInput = document.getElementById("roomStartTimeInput");
+        const roomEndTimeInput = document.getElementById("roomEndTimeInput");
+        const roomStatusInput = document.getElementById("roomStatusInput");
+        const roomIllustrationInput = document.getElementById("roomIllustrationInput");
+        const recentUsersGrid = document.getElementById("recentUsersGrid");
+        const userRoleSummary = document.getElementById("userRoleSummary");
+        const reservationsOverview = document.getElementById("reservationsOverview");
+        const systemAlertsList = document.getElementById("systemAlertsList");
+        let rooms = [];
+        let accounts = [];
+        let reservations = [];
 
         function loadCurrentUser() {
             try {
@@ -278,6 +489,671 @@
             }
         }
 
+        function cloneDefaultRooms() {
+            return DEFAULT_ROOMS.map((room) => ({ ...room }));
+        }
+
+        function isValidRoomStatus(value) {
+            return value === "ativa" || value === "revisao" || value === "bloqueada";
+        }
+
+        function sanitizeRoom(room) {
+            return {
+                id: room.id.trim(),
+                name: room.name.trim(),
+                type: room.type.trim(),
+                capacity: Number(room.capacity),
+                startTime: room.startTime,
+                endTime: room.endTime,
+                illustration: room.illustration,
+                status: isValidRoomStatus(room.status) ? room.status : "ativa"
+            };
+        }
+
+        function isValidRoom(value) {
+            return Boolean(
+                value &&
+                typeof value.id === "string" &&
+                value.id.trim() &&
+                typeof value.name === "string" &&
+                value.name.trim() &&
+                typeof value.type === "string" &&
+                value.type.trim() &&
+                Number.isFinite(Number(value.capacity)) &&
+                Number(value.capacity) > 0 &&
+                typeof value.startTime === "string" &&
+                timeOptions.includes(value.startTime) &&
+                typeof value.endTime === "string" &&
+                timeOptions.includes(value.endTime) &&
+                typeof value.illustration === "string" &&
+                value.illustration.trim() &&
+                (!value.status || isValidRoomStatus(value.status))
+            );
+        }
+
+        function loadRegisteredAccounts() {
+            try {
+                const storedAccounts = window.localStorage.getItem(ACCOUNTS_STORAGE_KEY);
+
+                if (storedAccounts) {
+                    const parsedAccounts = JSON.parse(storedAccounts);
+                    return Array.isArray(parsedAccounts) ? parsedAccounts : [];
+                }
+
+                const legacyStudents = window.localStorage.getItem(LEGACY_REGISTERED_STUDENTS_KEY);
+                const parsedStudents = legacyStudents ? JSON.parse(legacyStudents) : [];
+
+                if (!Array.isArray(parsedStudents)) {
+                    return [];
+                }
+
+                return parsedStudents.map((student) => ({
+                    ...student,
+                    role: student.role || "aluno"
+                }));
+            } catch (error) {
+                return [];
+            }
+        }
+
+        function saveRegisteredAccounts(nextAccounts) {
+            try {
+                window.localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(nextAccounts));
+            } catch (error) {
+                return nextAccounts;
+            }
+
+            return nextAccounts;
+        }
+
+        function ensureDemoAccounts() {
+            const storedAccounts = loadRegisteredAccounts();
+            const mergedAccounts = [...storedAccounts];
+
+            DEMO_ACCOUNTS.forEach((demoAccount) => {
+                const alreadyExists = mergedAccounts.some((account) => (
+                    account.email === demoAccount.email || account.cpf === demoAccount.cpf
+                ));
+
+                if (!alreadyExists) {
+                    mergedAccounts.push({ ...demoAccount });
+                }
+            });
+
+            return saveRegisteredAccounts(mergedAccounts).map((account) => ({
+                ...account,
+                role: account.role || "aluno"
+            }));
+        }
+
+        function loadReservations() {
+            try {
+                const storedReservations = window.localStorage.getItem(RESERVATIONS_STORAGE_KEY);
+                const parsedReservations = storedReservations ? JSON.parse(storedReservations) : [];
+                return Array.isArray(parsedReservations) ? parsedReservations : [];
+            } catch (error) {
+                return [];
+            }
+        }
+
+        function saveRooms(nextRooms) {
+            const safeRooms = Array.isArray(nextRooms)
+                ? nextRooms.filter(isValidRoom).map(sanitizeRoom)
+                : [];
+
+            rooms = safeRooms;
+
+            try {
+                window.localStorage.setItem(ROOMS_STORAGE_KEY, JSON.stringify(safeRooms));
+            } catch (error) {
+                return safeRooms;
+            }
+
+            return safeRooms;
+        }
+
+        function loadRooms() {
+            try {
+                const storedRooms = window.localStorage.getItem(ROOMS_STORAGE_KEY);
+
+                if (!storedRooms) {
+                    return saveRooms(cloneDefaultRooms());
+                }
+
+                const parsedRooms = JSON.parse(storedRooms);
+
+                if (!Array.isArray(parsedRooms)) {
+                    return saveRooms(cloneDefaultRooms());
+                }
+
+                const validRooms = parsedRooms.filter(isValidRoom).map(sanitizeRoom);
+
+                if (!parsedRooms.length) {
+                    rooms = [];
+                    return rooms;
+                }
+
+                if (!validRooms.length) {
+                    return saveRooms(cloneDefaultRooms());
+                }
+
+                rooms = validRooms;
+                return rooms;
+            } catch (error) {
+                return saveRooms(cloneDefaultRooms());
+            }
+        }
+
+        function showFeedback(type, title, message) {
+            if (!adminFeedback) {
+                return;
+            }
+
+            const tone = type === "success"
+                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                : "border-rose-200 bg-rose-50 text-rose-700";
+
+            adminFeedback.className = `rounded-[22px] border px-4 py-4 text-sm shadow-sm ${tone}`;
+            adminFeedback.innerHTML = `
+                <p class="font-extrabold uppercase tracking-wide">${title}</p>
+                <p class="mt-1 leading-6">${message}</p>
+            `;
+            adminFeedback.classList.remove("hidden");
+        }
+
+        function hideFeedback() {
+            if (adminFeedback) {
+                adminFeedback.classList.add("hidden");
+            }
+        }
+
+        function formatSchedule(startTime, endTime) {
+            return `${startTime} - ${endTime}`;
+        }
+
+        function formatShortDate(dateString) {
+            if (!dateString) {
+                return "--";
+            }
+
+            const [year, month, day] = dateString.split("-");
+
+            if (!year || !month || !day) {
+                return dateString;
+            }
+
+            return `${day}/${month}/${year}`;
+        }
+
+        function slugify(value) {
+            return value
+                .toLowerCase()
+                .trim()
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/^-+|-+$/g, "");
+        }
+
+        function buildUniqueRoomId(name) {
+            const baseSlug = slugify(name) || `sala-${Date.now()}`;
+            let candidate = baseSlug;
+            let suffix = 2;
+
+            while (rooms.some((room) => room.id === candidate)) {
+                candidate = `${baseSlug}-${suffix}`;
+                suffix += 1;
+            }
+
+            return candidate;
+        }
+
+        function getStatusMeta(status) {
+            if (status === "revisao") {
+                return {
+                    label: "Em revisao",
+                    badgeClass: "bg-amber-100 text-amber-700"
+                };
+            }
+
+            if (status === "bloqueada") {
+                return {
+                    label: "Bloqueada",
+                    badgeClass: "bg-rose-100 text-rose-700"
+                };
+            }
+
+            return {
+                label: "Ativa",
+                badgeClass: "bg-emerald-100 text-emerald-700"
+            };
+        }
+
+        function getRoleMeta(role) {
+            if (role === "admin") {
+                return {
+                    label: "Perfil admin",
+                    badgeClass: "bg-rose-100 text-rose-700"
+                };
+            }
+
+            if (role === "professor") {
+                return {
+                    label: "Perfil professor",
+                    badgeClass: "bg-amber-100 text-amber-700"
+                };
+            }
+
+            return {
+                label: "Perfil aluno",
+                badgeClass: "bg-emerald-100 text-emerald-700"
+            };
+        }
+
+        function getStatusSortOrder(status) {
+            if (status === "ativa") {
+                return 0;
+            }
+
+            if (status === "revisao") {
+                return 1;
+            }
+
+            return 2;
+        }
+
+        function getReservationsForRoom(roomId) {
+            return reservations.filter((reservation) => reservation.roomId === roomId);
+        }
+
+        function populateTimeSelect(selectElement, selectedValue) {
+            if (!selectElement) {
+                return;
+            }
+
+            selectElement.innerHTML = timeOptions.map((time) => `
+                <option value="${time}" ${time === selectedValue ? "selected" : ""}>${time}</option>
+            `).join("");
+        }
+
+        function updateStats() {
+            const activeRooms = rooms.filter((room) => room.status === "ativa");
+            const reviewRooms = rooms.filter((room) => room.status === "revisao");
+            const blockedRooms = rooms.filter((room) => room.status === "bloqueada");
+            const studentCount = accounts.filter((account) => (account.role || "aluno") === "aluno").length;
+            const professorCount = accounts.filter((account) => account.role === "professor").length;
+            const adminCount = accounts.filter((account) => account.role === "admin").length;
+
+            if (activeRoomsCount) {
+                activeRoomsCount.textContent = String(activeRooms.length);
+            }
+
+            if (activeRoomsDescription) {
+                activeRoomsDescription.textContent = activeRooms.length
+                    ? `${activeRooms.length} salas liberadas para o painel do aluno.`
+                    : "Nenhuma sala ativa carregada.";
+            }
+
+            if (usersCount) {
+                usersCount.textContent = String(accounts.length);
+            }
+
+            if (usersDescription) {
+                usersDescription.textContent = `${studentCount} aluno(s), ${professorCount} professor(es) e ${adminCount} admin(s).`;
+            }
+
+            if (reservationsCount) {
+                reservationsCount.textContent = String(reservations.length);
+            }
+
+            if (reservationsDescription) {
+                reservationsDescription.textContent = reservations.length
+                    ? `${reservations.length} reservas persistidas neste navegador.`
+                    : "Sem reservas ativas neste navegador.";
+            }
+
+            if (reviewRoomsCount) {
+                reviewRoomsCount.textContent = String(reviewRooms.length);
+            }
+
+            if (reviewRoomsDescription) {
+                reviewRoomsDescription.textContent = blockedRooms.length
+                    ? `${blockedRooms.length} sala(s) tambem estao bloqueadas.`
+                    : reviewRooms.length
+                        ? "Algumas salas precisam de avaliacao antes de voltar ao aluno."
+                        : "Nenhuma sala aguardando avaliacao.";
+            }
+        }
+
+        function renderRoomsTable() {
+            if (!roomsTableBody || !roomsTableWrapper || !roomsEmptyState) {
+                return;
+            }
+
+            if (!rooms.length) {
+                roomsTableBody.innerHTML = "";
+                roomsTableWrapper.classList.add("hidden");
+                roomsEmptyState.classList.remove("hidden");
+                return;
+            }
+
+            roomsTableWrapper.classList.remove("hidden");
+            roomsEmptyState.classList.add("hidden");
+
+            const sortedRooms = [...rooms].sort((firstRoom, secondRoom) => {
+                const statusDiff = getStatusSortOrder(firstRoom.status) - getStatusSortOrder(secondRoom.status);
+
+                if (statusDiff !== 0) {
+                    return statusDiff;
+                }
+
+                return firstRoom.name.localeCompare(secondRoom.name);
+            });
+
+            roomsTableBody.innerHTML = sortedRooms.map((room) => {
+                const statusMeta = getStatusMeta(room.status);
+                const roomReservations = getReservationsForRoom(room.id).length;
+
+                return `
+                    <tr>
+                        <td class="px-3 py-4">
+                            <p class="font-semibold text-slate-900">${room.name}</p>
+                            <p class="mt-1 text-xs text-slate-500">${roomReservations} reserva(s) vinculada(s)</p>
+                        </td>
+                        <td class="px-3 py-4">${room.type}</td>
+                        <td class="px-3 py-4">${formatSchedule(room.startTime, room.endTime)}</td>
+                        <td class="px-3 py-4">${room.capacity}</td>
+                        <td class="px-3 py-4">
+                            <div class="space-y-2">
+                                <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-extrabold uppercase tracking-wide ${statusMeta.badgeClass}">
+                                    ${statusMeta.label}
+                                </span>
+                                <select
+                                    data-room-status-id="${room.id}"
+                                    class="block w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 outline-none transition focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100"
+                                >
+                                    <option value="ativa" ${room.status === "ativa" ? "selected" : ""}>Ativa</option>
+                                    <option value="revisao" ${room.status === "revisao" ? "selected" : ""}>Em revisao</option>
+                                    <option value="bloqueada" ${room.status === "bloqueada" ? "selected" : ""}>Bloqueada</option>
+                                </select>
+                            </div>
+                        </td>
+                        <td class="px-3 py-4">
+                            <button
+                                type="button"
+                                data-remove-room-id="${room.id}"
+                                class="rounded-lg border border-slate-300 px-3 py-2 text-[0.68rem] font-extrabold uppercase tracking-wide text-slate-700 transition hover:border-rose-300 hover:text-rose-600"
+                            >
+                                Remover
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join("");
+        }
+
+        function renderRecentUsers() {
+            if (!recentUsersGrid || !userRoleSummary) {
+                return;
+            }
+
+            if (!accounts.length) {
+                userRoleSummary.textContent = "Nenhum usuario sincronizado.";
+                recentUsersGrid.innerHTML = `
+                    <article class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-sm text-slate-500 sm:col-span-2">
+                        Nenhuma conta foi encontrada no armazenamento local.
+                    </article>
+                `;
+                return;
+            }
+
+            const studentCount = accounts.filter((account) => (account.role || "aluno") === "aluno").length;
+            const professorCount = accounts.filter((account) => account.role === "professor").length;
+            const adminCount = accounts.filter((account) => account.role === "admin").length;
+
+            userRoleSummary.textContent = `Alunos: ${studentCount} | Professores: ${professorCount} | Admins: ${adminCount}`;
+
+            const visibleAccounts = accounts.slice(-6).reverse();
+            recentUsersGrid.innerHTML = visibleAccounts.map((account) => {
+                const roleMeta = getRoleMeta(account.role || "aluno");
+                const displayName = getDisplayName(account);
+
+                return `
+                    <article class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <p class="text-sm font-bold text-slate-900">${displayName}</p>
+                                <p class="mt-1 text-sm text-slate-500">${account.email || account.cpf || "Conta local"}</p>
+                            </div>
+                            <span class="rounded-full px-2.5 py-1 text-[0.68rem] font-extrabold uppercase tracking-wide ${roleMeta.badgeClass}">
+                                ${roleMeta.label}
+                            </span>
+                        </div>
+                    </article>
+                `;
+            }).join("");
+        }
+
+        function renderReservationsOverview() {
+            if (!reservationsOverview) {
+                return;
+            }
+
+            if (!reservations.length) {
+                reservationsOverview.innerHTML = `
+                    <article class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-sm text-slate-500">
+                        Nenhuma reserva ativa foi salva at&eacute; agora neste navegador.
+                    </article>
+                `;
+                return;
+            }
+
+            const latestReservations = reservations.slice(0, 4);
+            reservationsOverview.innerHTML = latestReservations.map((reservation) => `
+                <article class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                    <p class="text-sm font-bold text-slate-900">${reservation.roomName}</p>
+                    <p class="mt-1 text-sm text-slate-600">${formatShortDate(reservation.date)} as ${reservation.time}</p>
+                </article>
+            `).join("");
+        }
+
+        function renderSystemAlerts() {
+            if (!systemAlertsList) {
+                return;
+            }
+
+            const blockedRooms = rooms.filter((room) => room.status === "bloqueada");
+            const reviewRooms = rooms.filter((room) => room.status === "revisao");
+            const activeRooms = rooms.filter((room) => room.status === "ativa");
+            const alerts = [];
+
+            if (blockedRooms.length) {
+                alerts.push({
+                    tone: "rose",
+                    title: "Atencao",
+                    message: `${blockedRooms.length} sala(s) estao bloqueadas e nao aparecem mais para o estudante.`
+                });
+            }
+
+            if (reviewRooms.length) {
+                alerts.push({
+                    tone: "amber",
+                    title: "Revisao",
+                    message: `${reviewRooms.length} sala(s) aguardam avaliacao antes de voltar ao catalogo ativo.`
+                });
+            }
+
+            if (reservations.length) {
+                alerts.push({
+                    tone: "brand",
+                    title: "Reservas em curso",
+                    message: `${reservations.length} reserva(s) continuam salvas no navegador para acompanhamento do prototipo.`
+                });
+            }
+
+            if (!alerts.length) {
+                alerts.push({
+                    tone: "emerald",
+                    title: "Tudo certo",
+                    message: activeRooms.length
+                        ? "O catalogo esta sincronizado e pronto para testes no painel do aluno."
+                        : "Cadastre uma sala para comecar a alimentar o painel do aluno."
+                });
+            }
+
+            systemAlertsList.innerHTML = alerts.slice(0, 4).map((alert) => {
+                const toneMap = {
+                    rose: "border-rose-200 bg-rose-50 text-rose-700",
+                    amber: "border-amber-200 bg-amber-50 text-amber-700",
+                    brand: "border-brand-200 bg-brand-50 text-brand-700",
+                    emerald: "border-emerald-200 bg-emerald-50 text-emerald-700"
+                };
+
+                return `
+                    <article class="rounded-2xl border px-4 py-3 ${toneMap[alert.tone] || toneMap.emerald}">
+                        <p class="text-xs font-extrabold uppercase tracking-wide">${alert.title}</p>
+                        <p class="mt-1 text-sm leading-6 text-slate-700">${alert.message}</p>
+                    </article>
+                `;
+            }).join("");
+        }
+
+        function syncAdminDashboard() {
+            accounts = ensureDemoAccounts();
+            rooms = loadRooms();
+            reservations = loadReservations();
+            updateStats();
+            renderRoomsTable();
+            renderRecentUsers();
+            renderReservationsOverview();
+            renderSystemAlerts();
+        }
+
+        function resetRoomForm() {
+            if (!roomForm) {
+                return;
+            }
+
+            roomForm.reset();
+            populateTimeSelect(roomStartTimeInput, "08:00");
+            populateTimeSelect(roomEndTimeInput, "18:00");
+
+            if (roomStatusInput) {
+                roomStatusInput.value = "ativa";
+            }
+
+            if (roomIllustrationInput) {
+                roomIllustrationInput.value = "study";
+            }
+        }
+
+        function handleCreateRoom(event) {
+            event.preventDefault();
+
+            const name = roomNameInput?.value.trim() || "";
+            const type = roomTypeInput?.value || "Sala de Estudo";
+            const capacity = Number(roomCapacityInput?.value || 0);
+            const startTime = roomStartTimeInput?.value || "";
+            const endTime = roomEndTimeInput?.value || "";
+            const status = roomStatusInput?.value || "ativa";
+            const illustration = roomIllustrationInput?.value || "study";
+
+            if (name.length < 3) {
+                showFeedback("error", "Nome invalido", "Digite um nome mais completo para identificar a sala.");
+                return;
+            }
+
+            if (!Number.isFinite(capacity) || capacity < 1) {
+                showFeedback("error", "Capacidade invalida", "Informe uma capacidade maior que zero.");
+                return;
+            }
+
+            if (!timeOptions.includes(startTime) || !timeOptions.includes(endTime)) {
+                showFeedback("error", "Horario invalido", "Escolha horarios validos para o funcionamento da sala.");
+                return;
+            }
+
+            if (timeOptions.indexOf(startTime) >= timeOptions.indexOf(endTime)) {
+                showFeedback("error", "Intervalo invalido", "O horario final precisa ser maior que o horario inicial.");
+                return;
+            }
+
+            const duplicatedRoom = rooms.some((room) => room.name.toLowerCase() === name.toLowerCase());
+
+            if (duplicatedRoom) {
+                showFeedback("error", "Sala ja existente", "Escolha outro nome para evitar duplicidade no catalogo.");
+                return;
+            }
+
+            const nextRoom = {
+                id: buildUniqueRoomId(name),
+                name,
+                type,
+                capacity,
+                startTime,
+                endTime,
+                illustration,
+                status
+            };
+
+            saveRooms([nextRoom, ...rooms]);
+            syncAdminDashboard();
+            resetRoomForm();
+            showFeedback("success", "Sala cadastrada", `${name} agora faz parte do catalogo local do RoomEasy.`);
+        }
+
+        function handleStatusChange(roomId, nextStatus) {
+            if (!isValidRoomStatus(nextStatus)) {
+                return;
+            }
+
+            const targetRoom = rooms.find((room) => room.id === roomId);
+
+            if (!targetRoom || targetRoom.status === nextStatus) {
+                return;
+            }
+
+            saveRooms(rooms.map((room) => (
+                room.id === roomId
+                    ? { ...room, status: nextStatus }
+                    : room
+            )));
+            syncAdminDashboard();
+            showFeedback("success", "Status atualizado", `${targetRoom.name} foi marcada como ${getStatusMeta(nextStatus).label.toLowerCase()}.`);
+        }
+
+        function handleRemoveRoom(roomId) {
+            const targetRoom = rooms.find((room) => room.id === roomId);
+
+            if (!targetRoom) {
+                return;
+            }
+
+            const relatedReservations = getReservationsForRoom(roomId).length;
+            const warningMessage = relatedReservations
+                ? `${targetRoom.name} possui ${relatedReservations} reserva(s) vinculada(s). Deseja remover mesmo assim?`
+                : `Deseja remover ${targetRoom.name} do catalogo?`;
+            const confirmed = window.confirm(warningMessage);
+
+            if (!confirmed) {
+                return;
+            }
+
+            saveRooms(rooms.filter((room) => room.id !== roomId));
+            syncAdminDashboard();
+            showFeedback("success", "Sala removida", `${targetRoom.name} saiu do catalogo local do administrador.`);
+        }
+
+        function handleRestoreDemoRooms() {
+            const confirmed = window.confirm("Deseja restaurar o catalogo demo de salas?");
+
+            if (!confirmed) {
+                return;
+            }
+
+            saveRooms(cloneDefaultRooms());
+            syncAdminDashboard();
+            showFeedback("success", "Catalogo restaurado", "As salas demo foram restauradas para continuar os testes.");
+        }
+
         function handleLogout() {
             const confirmed = window.confirm("Deseja sair do painel e voltar para o login?");
 
@@ -306,6 +1182,57 @@
         if (logoutButton) {
             logoutButton.addEventListener("click", handleLogout);
         }
+
+        if (roomForm) {
+            roomForm.addEventListener("submit", handleCreateRoom);
+        }
+
+        if (roomsTableBody) {
+            roomsTableBody.addEventListener("change", function (event) {
+                const target = event.target.closest("[data-room-status-id]");
+
+                if (!target) {
+                    return;
+                }
+
+                handleStatusChange(target.dataset.roomStatusId, target.value);
+            });
+
+            roomsTableBody.addEventListener("click", function (event) {
+                const target = event.target.closest("[data-remove-room-id]");
+
+                if (!target) {
+                    return;
+                }
+
+                handleRemoveRoom(target.dataset.removeRoomId);
+            });
+        }
+
+        if (restoreRoomsButton) {
+            restoreRoomsButton.addEventListener("click", handleRestoreDemoRooms);
+        }
+
+        if (scrollToRoomFormButton && roomFormSection) {
+            scrollToRoomFormButton.addEventListener("click", function () {
+                roomFormSection.scrollIntoView({ behavior: "smooth", block: "start" });
+                roomNameInput?.focus();
+            });
+        }
+
+        window.addEventListener("storage", function (event) {
+            if (
+                event.key === ROOMS_STORAGE_KEY ||
+                event.key === ACCOUNTS_STORAGE_KEY ||
+                event.key === RESERVATIONS_STORAGE_KEY
+            ) {
+                syncAdminDashboard();
+            }
+        });
+
+        populateTimeSelect(roomStartTimeInput, "08:00");
+        populateTimeSelect(roomEndTimeInput, "18:00");
+        syncAdminDashboard();
     </script>
 </body>
 </html>

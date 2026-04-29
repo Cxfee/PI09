@@ -428,7 +428,7 @@
     </main>
 
     <script>
-        const rooms = [
+        const DEFAULT_ROOMS = [
             {
                 id: "sala-3a",
                 name: "Sala de Estudos 3A",
@@ -436,7 +436,8 @@
                 capacity: 4,
                 startTime: "13:00",
                 endTime: "22:00",
-                illustration: "study"
+                illustration: "study",
+                status: "ativa"
             },
             {
                 id: "bio-2",
@@ -445,7 +446,8 @@
                 capacity: 4,
                 startTime: "12:00",
                 endTime: "22:00",
-                illustration: "bio"
+                illustration: "bio",
+                status: "ativa"
             },
             {
                 id: "maker-1",
@@ -454,7 +456,8 @@
                 capacity: 8,
                 startTime: "10:00",
                 endTime: "20:00",
-                illustration: "maker"
+                illustration: "maker",
+                status: "ativa"
             },
             {
                 id: "sala-2b",
@@ -463,7 +466,8 @@
                 capacity: 6,
                 startTime: "09:00",
                 endTime: "21:00",
-                illustration: "study-wide"
+                illustration: "study-wide",
+                status: "ativa"
             },
             {
                 id: "reuniao-1c",
@@ -472,7 +476,8 @@
                 capacity: 8,
                 startTime: "08:00",
                 endTime: "18:00",
-                illustration: "meeting"
+                illustration: "meeting",
+                status: "ativa"
             },
             {
                 id: "info-4",
@@ -481,7 +486,8 @@
                 capacity: 12,
                 startTime: "07:00",
                 endTime: "19:00",
-                illustration: "informatics"
+                illustration: "informatics",
+                status: "ativa"
             }
         ];
 
@@ -579,6 +585,7 @@
         const CURRENT_USER_KEY = "roomEasyCurrentUser";
         const LEGACY_CURRENT_STUDENT_KEY = "roomEasyCurrentStudent";
         const NOTIFICATIONS_STORAGE_KEY = "roomEasyStudentNotifications";
+        const ROOMS_STORAGE_KEY = "roomEasyManagedRooms";
         const defaultReservations = [
             {
                 id: "reserva-1",
@@ -602,6 +609,7 @@
                 time: "10:00"
             }
         ];
+        let rooms = [];
         let reservations = [];
         let notifications = [];
         let currentStudent = null;
@@ -651,6 +659,74 @@
 
         function cloneDefaultReservations() {
             return defaultReservations.map((reservation) => ({ ...reservation }));
+        }
+
+        function cloneDefaultRooms() {
+            return DEFAULT_ROOMS.map((room) => ({ ...room }));
+        }
+
+        function isValidRoomStatus(value) {
+            return value === "ativa" || value === "revisao" || value === "bloqueada";
+        }
+
+        function sanitizeRoom(room) {
+            return {
+                id: room.id.trim(),
+                name: room.name.trim(),
+                type: room.type.trim(),
+                capacity: Number(room.capacity),
+                startTime: room.startTime,
+                endTime: room.endTime,
+                illustration: room.illustration,
+                status: isValidRoomStatus(room.status) ? room.status : "ativa"
+            };
+        }
+
+        function isValidRoom(value) {
+            return Boolean(
+                value &&
+                typeof value.id === "string" &&
+                value.id.trim() &&
+                typeof value.name === "string" &&
+                value.name.trim() &&
+                typeof value.type === "string" &&
+                value.type.trim() &&
+                Number.isFinite(Number(value.capacity)) &&
+                Number(value.capacity) > 0 &&
+                typeof value.startTime === "string" &&
+                timeOptions.includes(value.startTime) &&
+                typeof value.endTime === "string" &&
+                timeOptions.includes(value.endTime) &&
+                typeof value.illustration === "string" &&
+                roomIllustrations[value.illustration] &&
+                (!value.status || isValidRoomStatus(value.status))
+            );
+        }
+
+        function loadManagedRooms() {
+            try {
+                const storedRooms = window.localStorage.getItem(ROOMS_STORAGE_KEY);
+
+                if (!storedRooms) {
+                    return cloneDefaultRooms();
+                }
+
+                const parsedRooms = JSON.parse(storedRooms);
+
+                if (!Array.isArray(parsedRooms)) {
+                    return cloneDefaultRooms();
+                }
+
+                const validRooms = parsedRooms.filter(isValidRoom).map(sanitizeRoom);
+
+                if (!parsedRooms.length) {
+                    return [];
+                }
+
+                return validRooms.length ? validRooms : cloneDefaultRooms();
+            } catch (error) {
+                return cloneDefaultRooms();
+            }
         }
 
         function loadCurrentStudent() {
@@ -954,6 +1030,11 @@
                 return;
             }
 
+            if (!totalCount) {
+                roomsSummary.textContent = "Nenhuma sala ativa foi liberada pela administracao no momento.";
+                return;
+            }
+
             if (filteredCount === totalCount) {
                 roomsSummary.textContent = "Exibindo todas as salas disponiveis no momento.";
                 return;
@@ -962,14 +1043,23 @@
             roomsSummary.textContent = `Mostrando ${filteredCount} de ${totalCount} salas apos aplicar os filtros.`;
         }
 
-        function updateRoomsEmptyState(invalidRange) {
+        function updateRoomsEmptyState(options = {}) {
             if (!roomsEmptyTitle || !roomsEmptyMessage) {
                 return;
             }
 
+            const invalidRange = Boolean(options.invalidRange);
+            const noAvailableRooms = Boolean(options.noAvailableRooms);
+
             if (invalidRange) {
                 roomsEmptyTitle.textContent = "Intervalo de horario invalido.";
                 roomsEmptyMessage.textContent = "Escolha um horario inicial menor ou igual ao horario final para continuar.";
+                return;
+            }
+
+            if (noAvailableRooms) {
+                roomsEmptyTitle.textContent = "Nenhuma sala ativa no momento.";
+                roomsEmptyMessage.textContent = "O administrador ainda nao liberou salas para reserva ou todas estao temporariamente indisponiveis.";
                 return;
             }
 
@@ -1364,10 +1454,14 @@
                 return;
             }
 
+            const availableRooms = rooms.filter((room) => room.status === "ativa");
             roomsCount.textContent = `${items.length} ${items.length === 1 ? "resultado" : "resultados"}`;
-            updateRoomsSummary(items.length, rooms.length);
+            updateRoomsSummary(items.length, availableRooms.length);
             updateRequestedSlotSummary();
-            updateRoomsEmptyState(Boolean(options.invalidRange));
+            updateRoomsEmptyState({
+                invalidRange: Boolean(options.invalidRange),
+                noAvailableRooms: !availableRooms.length
+            });
 
             if (!items.length) {
                 roomsGrid.innerHTML = "";
@@ -1483,6 +1577,16 @@
                 return;
             }
 
+            if (room.status !== "ativa") {
+                showAlert(
+                    "error",
+                    "Sala indisponivel.",
+                    `${room.name} nao esta liberada para novas reservas no momento.`
+                );
+                applyFilters();
+                return;
+            }
+
             const nextReservation = buildReservationFromRoom(room);
             const conflictingReservation = getReservationForTimeslot(nextReservation.date, nextReservation.time);
 
@@ -1583,6 +1687,10 @@
             }
 
             const items = rooms.filter((room) => {
+                if (room.status !== "ativa") {
+                    return false;
+                }
+
                 const roomSearchTarget = normalizeText(`${room.name} ${room.type}`);
                 const roomStartMinutes = timeToMinutes(room.startTime);
                 const roomEndMinutes = timeToMinutes(room.endTime);
@@ -1611,6 +1719,7 @@
 
         currentStudent = loadCurrentStudent();
         updateCurrentStudentUI();
+        rooms = loadManagedRooms();
         reservations = loadReservations();
         notifications = loadNotifications();
         populateTimeSelect(startTimeFilter, "", "Horario inicial");
@@ -1788,6 +1897,13 @@
         document.addEventListener("keydown", function (event) {
             if (event.key === "Escape") {
                 toggleNotificationsPanel(false);
+            }
+        });
+
+        window.addEventListener("storage", function (event) {
+            if (event.key === ROOMS_STORAGE_KEY) {
+                rooms = loadManagedRooms();
+                applyFilters();
             }
         });
 
