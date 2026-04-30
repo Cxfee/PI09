@@ -2011,6 +2011,13 @@
                 return;
             }
 
+            if (event.key === STORAGE_KEY) {
+                reservations = loadReservations();
+                renderReservations();
+                applyFilters();
+                return;
+            }
+
             if (event.key === PROFESSOR_REQUESTS_KEY) {
                 professorRequests = loadProfessorRequests();
                 applyFilters();
