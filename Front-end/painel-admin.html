@@ -142,13 +142,6 @@
                                     >
                                         Nova sala
                                     </button>
-                                    <button
-                                        id="restoreRoomsButton"
-                                        type="button"
-                                        class="rounded-xl border border-slate-300 px-3 py-2 text-xs font-extrabold uppercase tracking-wide text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
-                                    >
-                                        Restaurar demo
-                                    </button>
                                 </div>
                             </div>
 
@@ -364,91 +357,31 @@
         const RESERVATIONS_STORAGE_KEY = "roomEasyStudentReservations";
         const ROOMS_STORAGE_KEY = "roomEasyManagedRooms";
         const PROFESSOR_REQUESTS_KEY = "roomEasyProfessorRequests";
-        const DEMO_ACCOUNTS = [
-            {
-                email: "aluno@roomeasy.com",
-                cpf: "11111111111",
-                name: "Ana Lima",
-                password: "123456",
-                role: "aluno"
-            },
-            {
-                email: "professor@roomeasy.com",
-                cpf: "22222222222",
-                name: "Prof. Carlos Souza",
-                password: "123456",
-                role: "professor"
-            },
-            {
-                email: "admin@roomeasy.com",
-                cpf: "33333333333",
-                name: "Admin RoomEasy",
-                password: "123456",
-                role: "admin"
-            }
-        ];
-        const DEFAULT_ROOMS = [
-            {
-                id: "sala-3a",
-                name: "Sala de Estudos 3A",
-                type: "Sala de Estudo",
-                capacity: 4,
-                startTime: "13:00",
-                endTime: "22:00",
-                illustration: "study",
-                status: "ativa"
-            },
-            {
-                id: "bio-2",
-                name: "Laboratorio de Biologia 2",
-                type: "Laboratorio",
-                capacity: 4,
-                startTime: "12:00",
-                endTime: "22:00",
-                illustration: "bio",
-                status: "ativa"
-            },
-            {
-                id: "maker-1",
-                name: "Laboratorio Maker 1",
-                type: "Laboratorio",
-                capacity: 8,
-                startTime: "10:00",
-                endTime: "20:00",
-                illustration: "maker",
-                status: "ativa"
-            },
-            {
-                id: "sala-2b",
-                name: "Sala de Estudos 2B",
-                type: "Sala de Estudo",
-                capacity: 6,
-                startTime: "09:00",
-                endTime: "21:00",
-                illustration: "study-wide",
-                status: "ativa"
-            },
-            {
-                id: "reuniao-1c",
-                name: "Sala de Reuniao 1C",
-                type: "Sala de Estudo",
-                capacity: 8,
-                startTime: "08:00",
-                endTime: "18:00",
-                illustration: "meeting",
-                status: "ativa"
-            },
-            {
-                id: "info-4",
-                name: "Laboratorio de Informatica 4",
-                type: "Laboratorio",
-                capacity: 12,
-                startTime: "07:00",
-                endTime: "19:00",
-                illustration: "informatics",
-                status: "ativa"
-            }
-        ];
+        const DEMO_ACCOUNT_EMAILS = new Set([
+            "aluno@roomeasy.com",
+            "professor@roomeasy.com",
+            "admin@roomeasy.com"
+        ]);
+        const DEMO_ACCOUNT_CPFS = new Set([
+            "11111111111",
+            "22222222222",
+            "33333333333"
+        ]);
+        const DEMO_ROOM_IDS = new Set([
+            "sala-3a",
+            "bio-2",
+            "maker-1",
+            "sala-2b",
+            "reuniao-1c",
+            "info-4"
+        ]);
+        const DEMO_RESERVATION_IDS = new Set([
+            "reserva-1",
+            "reserva-2",
+            "reserva-3"
+        ]);
+        const DEMO_PROFESSOR_REQUEST_PREFIX = "prof-request-demo-";
+        const DEMO_PROFESSOR_OWNER_KEY = "professor@roomeasy.com";
         const timeOptions = [
             "07:00",
             "08:00",
@@ -482,7 +415,6 @@
         const roomsTableWrapper = document.getElementById("roomsTableWrapper");
         const roomsTableBody = document.getElementById("roomsTableBody");
         const roomsEmptyState = document.getElementById("roomsEmptyState");
-        const restoreRoomsButton = document.getElementById("restoreRoomsButton");
         const scrollToRoomFormButton = document.getElementById("scrollToRoomFormButton");
         const roomFormSection = document.getElementById("roomFormSection");
         const roomForm = document.getElementById("roomForm");
@@ -512,7 +444,24 @@
         function loadCurrentUser() {
             try {
                 const storedUser = window.localStorage.getItem(CURRENT_USER_KEY) || window.localStorage.getItem(LEGACY_CURRENT_STUDENT_KEY);
-                return storedUser ? JSON.parse(storedUser) : null;
+
+                if (!storedUser) {
+                    return null;
+                }
+
+                const parsedUser = JSON.parse(storedUser);
+
+                if (!parsedUser || typeof parsedUser !== "object") {
+                    return null;
+                }
+
+                if (isDemoAccount(parsedUser)) {
+                    window.localStorage.removeItem(CURRENT_USER_KEY);
+                    window.localStorage.removeItem(LEGACY_CURRENT_STUDENT_KEY);
+                    return null;
+                }
+
+                return parsedUser;
             } catch (error) {
                 return null;
             }
@@ -555,8 +504,24 @@
             }
         }
 
-        function cloneDefaultRooms() {
-            return DEFAULT_ROOMS.map((room) => ({ ...room }));
+        function isDemoAccount(account) {
+            const email = typeof account?.email === "string" ? account.email.trim().toLowerCase() : "";
+            const cpf = typeof account?.cpf === "string" ? account.cpf.replace(/\D/g, "") : "";
+            return DEMO_ACCOUNT_EMAILS.has(email) || DEMO_ACCOUNT_CPFS.has(cpf);
+        }
+
+        function isDemoRoomId(roomId) {
+            return typeof roomId === "string" && DEMO_ROOM_IDS.has(roomId.trim());
+        }
+
+        function isDemoReservation(value) {
+            return DEMO_RESERVATION_IDS.has(value?.id) || isDemoRoomId(value?.roomId);
+        }
+
+        function isDemoProfessorRequest(value) {
+            const requestId = typeof value?.id === "string" ? value.id.trim() : "";
+            const ownerKey = typeof value?.ownerKey === "string" ? value.ownerKey.trim().toLowerCase() : "";
+            return requestId.startsWith(DEMO_PROFESSOR_REQUEST_PREFIX) || isDemoRoomId(value?.roomId) || ownerKey === DEMO_PROFESSOR_OWNER_KEY;
         }
 
         function isValidRoomStatus(value) {
@@ -600,23 +565,36 @@
         function loadRegisteredAccounts() {
             try {
                 const storedAccounts = window.localStorage.getItem(ACCOUNTS_STORAGE_KEY);
+                let parsedAccounts = [];
+                let shouldPersistCleanup = false;
 
                 if (storedAccounts) {
-                    const parsedAccounts = JSON.parse(storedAccounts);
-                    return Array.isArray(parsedAccounts) ? parsedAccounts : [];
+                    const loadedAccounts = JSON.parse(storedAccounts);
+                    parsedAccounts = Array.isArray(loadedAccounts) ? loadedAccounts : [];
+                    shouldPersistCleanup = true;
+                } else {
+                    const legacyStudents = window.localStorage.getItem(LEGACY_REGISTERED_STUDENTS_KEY);
+                    parsedAccounts = legacyStudents ? JSON.parse(legacyStudents) : [];
+
+                    if (!Array.isArray(parsedAccounts)) {
+                        return [];
+                    }
+
+                    shouldPersistCleanup = parsedAccounts.length > 0;
                 }
 
-                const legacyStudents = window.localStorage.getItem(LEGACY_REGISTERED_STUDENTS_KEY);
-                const parsedStudents = legacyStudents ? JSON.parse(legacyStudents) : [];
+                const safeAccounts = parsedAccounts
+                    .filter((account) => !isDemoAccount(account))
+                    .map((account) => ({
+                        ...account,
+                        role: account.role || "aluno"
+                    }));
 
-                if (!Array.isArray(parsedStudents)) {
-                    return [];
+                if (shouldPersistCleanup && safeAccounts.length !== parsedAccounts.length) {
+                    saveRegisteredAccounts(safeAccounts);
                 }
 
-                return parsedStudents.map((student) => ({
-                    ...student,
-                    role: student.role || "aluno"
-                }));
+                return safeAccounts;
             } catch (error) {
                 return [];
             }
@@ -632,38 +610,47 @@
             return nextAccounts;
         }
 
-        function ensureDemoAccounts() {
-            const storedAccounts = loadRegisteredAccounts();
-            const mergedAccounts = [...storedAccounts];
-
-            DEMO_ACCOUNTS.forEach((demoAccount) => {
-                const alreadyExists = mergedAccounts.some((account) => (
-                    account.email === demoAccount.email || account.cpf === demoAccount.cpf
-                ));
-
-                if (!alreadyExists) {
-                    mergedAccounts.push({ ...demoAccount });
-                }
-            });
-
-            return saveRegisteredAccounts(mergedAccounts).map((account) => ({
-                ...account,
-                role: account.role || "aluno"
-            }));
-        }
-
         function loadReservations() {
             try {
                 const storedReservations = window.localStorage.getItem(RESERVATIONS_STORAGE_KEY);
                 const parsedReservations = storedReservations ? JSON.parse(storedReservations) : [];
-                return Array.isArray(parsedReservations) ? parsedReservations : [];
+
+                if (!Array.isArray(parsedReservations)) {
+                    return [];
+                }
+
+                const safeReservations = parsedReservations.filter((reservation) => (
+                    reservation &&
+                    typeof reservation.id === "string" &&
+                    typeof reservation.roomId === "string" &&
+                    typeof reservation.roomName === "string" &&
+                    typeof reservation.date === "string" &&
+                    typeof reservation.time === "string" &&
+                    !isDemoReservation(reservation)
+                ));
+
+                if (safeReservations.length !== parsedReservations.length) {
+                    window.localStorage.setItem(RESERVATIONS_STORAGE_KEY, JSON.stringify(safeReservations));
+                }
+
+                return safeReservations;
             } catch (error) {
                 return [];
             }
         }
 
         function saveReservations(nextReservations) {
-            const safeReservations = Array.isArray(nextReservations) ? nextReservations : [];
+            const safeReservations = Array.isArray(nextReservations)
+                ? nextReservations.filter((reservation) => (
+                    reservation &&
+                    typeof reservation.id === "string" &&
+                    typeof reservation.roomId === "string" &&
+                    typeof reservation.roomName === "string" &&
+                    typeof reservation.date === "string" &&
+                    typeof reservation.time === "string" &&
+                    !isDemoReservation(reservation)
+                ))
+                : [];
             reservations = safeReservations;
 
             try {
@@ -673,72 +660,6 @@
             }
 
             return safeReservations;
-        }
-
-        function getTodayDateValue() {
-            const currentDate = new Date();
-            const year = currentDate.getFullYear();
-            const month = String(currentDate.getMonth() + 1).padStart(2, "0");
-            const day = String(currentDate.getDate()).padStart(2, "0");
-            return `${year}-${month}-${day}`;
-        }
-
-        function addDaysToDate(dateValue, amount) {
-            const baseDate = new Date(`${dateValue}T00:00:00`);
-            baseDate.setDate(baseDate.getDate() + amount);
-            const year = baseDate.getFullYear();
-            const month = String(baseDate.getMonth() + 1).padStart(2, "0");
-            const day = String(baseDate.getDate()).padStart(2, "0");
-            return `${year}-${month}-${day}`;
-        }
-
-        function buildDemoProfessorRequests() {
-            const today = getTodayDateValue();
-
-            return [
-                {
-                    id: "prof-request-demo-1-professorroomeasycom",
-                    ownerKey: "professor@roomeasy.com",
-                    teacherName: "Prof. Carlos Souza",
-                    roomId: "bio-2",
-                    roomName: "Laboratorio de Biologia 2",
-                    className: "Bioquimica I",
-                    purpose: "Aula pratica",
-                    date: today,
-                    startTime: "08:00",
-                    endTime: "10:00",
-                    status: "confirmada",
-                    createdAt: Date.now() - 300000
-                },
-                {
-                    id: "prof-request-demo-2-professorroomeasycom",
-                    ownerKey: "professor@roomeasy.com",
-                    teacherName: "Prof. Carlos Souza",
-                    roomId: "sala-3a",
-                    roomName: "Sala de Estudos 3A",
-                    className: "Monitoria",
-                    purpose: "Revisao de conteudo",
-                    date: addDaysToDate(today, 1),
-                    startTime: "14:00",
-                    endTime: "16:00",
-                    status: "confirmada",
-                    createdAt: Date.now() - 240000
-                },
-                {
-                    id: "prof-request-demo-3-professorroomeasycom",
-                    ownerKey: "professor@roomeasy.com",
-                    teacherName: "Prof. Carlos Souza",
-                    roomId: "info-4",
-                    roomName: "Laboratorio de Informatica 4",
-                    className: "Algoritmos",
-                    purpose: "Atividade orientada",
-                    date: addDaysToDate(today, 2),
-                    startTime: "19:00",
-                    endTime: "21:00",
-                    status: "em-analise",
-                    createdAt: Date.now() - 120000
-                }
-            ];
         }
 
         function isValidProfessorRequestStatus(value) {
@@ -792,7 +713,10 @@
 
         function saveProfessorRequests(nextRequests) {
             const safeRequests = Array.isArray(nextRequests)
-                ? nextRequests.filter(isValidProfessorRequest).map(sanitizeProfessorRequest)
+                ? nextRequests
+                    .filter(isValidProfessorRequest)
+                    .map(sanitizeProfessorRequest)
+                    .filter((request) => !isDemoProfessorRequest(request))
                 : [];
 
             professorRequests = safeRequests;
@@ -811,13 +735,13 @@
                 const storedRequests = window.localStorage.getItem(PROFESSOR_REQUESTS_KEY);
 
                 if (!storedRequests) {
-                    return saveProfessorRequests(buildDemoProfessorRequests());
+                    return [];
                 }
 
                 const parsedRequests = JSON.parse(storedRequests);
 
                 if (!Array.isArray(parsedRequests)) {
-                    return saveProfessorRequests(buildDemoProfessorRequests());
+                    return [];
                 }
 
                 if (!parsedRequests.length) {
@@ -825,16 +749,27 @@
                     return professorRequests;
                 }
 
-                const validRequests = parsedRequests.filter(isValidProfessorRequest).map(sanitizeProfessorRequest);
-                return validRequests.length ? validRequests : saveProfessorRequests(buildDemoProfessorRequests());
+                const validRequests = parsedRequests
+                    .filter(isValidProfessorRequest)
+                    .map(sanitizeProfessorRequest)
+                    .filter((request) => !isDemoProfessorRequest(request));
+
+                if (validRequests.length !== parsedRequests.length) {
+                    return saveProfessorRequests(validRequests);
+                }
+
+                professorRequests = validRequests;
+                return professorRequests;
             } catch (error) {
-                return saveProfessorRequests(buildDemoProfessorRequests());
+                return [];
             }
         }
 
         function saveRooms(nextRooms) {
             const safeRooms = Array.isArray(nextRooms)
-                ? nextRooms.filter(isValidRoom).map(sanitizeRoom)
+                ? nextRooms
+                    .filter((room) => isValidRoom(room) && !isDemoRoomId(room.id))
+                    .map(sanitizeRoom)
                 : [];
 
             rooms = safeRooms;
@@ -853,30 +788,32 @@
                 const storedRooms = window.localStorage.getItem(ROOMS_STORAGE_KEY);
 
                 if (!storedRooms) {
-                    return saveRooms(cloneDefaultRooms());
+                    return [];
                 }
 
                 const parsedRooms = JSON.parse(storedRooms);
 
                 if (!Array.isArray(parsedRooms)) {
-                    return saveRooms(cloneDefaultRooms());
+                    return [];
                 }
 
-                const validRooms = parsedRooms.filter(isValidRoom).map(sanitizeRoom);
+                const validRooms = parsedRooms
+                    .filter((room) => isValidRoom(room) && !isDemoRoomId(room.id))
+                    .map(sanitizeRoom);
 
                 if (!parsedRooms.length) {
                     rooms = [];
                     return rooms;
                 }
 
-                if (!validRooms.length) {
-                    return saveRooms(cloneDefaultRooms());
+                if (validRooms.length !== parsedRooms.length) {
+                    return saveRooms(validRooms);
                 }
 
                 rooms = validRooms;
                 return rooms;
             } catch (error) {
-                return saveRooms(cloneDefaultRooms());
+                return [];
             }
         }
 
@@ -1482,7 +1419,7 @@
         }
 
         function syncAdminDashboard() {
-            accounts = ensureDemoAccounts();
+            accounts = loadRegisteredAccounts();
             rooms = loadRooms();
             reservations = loadReservations();
             professorRequests = loadProfessorRequests();
@@ -1607,18 +1544,6 @@
             saveRooms(rooms.filter((room) => room.id !== roomId));
             syncAdminDashboard();
             showFeedback("success", "Sala removida", `${targetRoom.name} saiu do catalogo local do administrador.`);
-        }
-
-        function handleRestoreDemoRooms() {
-            const confirmed = window.confirm("Deseja restaurar o catalogo demo de salas?");
-
-            if (!confirmed) {
-                return;
-            }
-
-            saveRooms(cloneDefaultRooms());
-            syncAdminDashboard();
-            showFeedback("success", "Catalogo restaurado", "As salas demo foram restauradas para continuar os testes.");
         }
 
         function handleCancelStudentReservation(reservationId) {
@@ -1773,10 +1698,6 @@
 
                 handleRemoveRoom(target.dataset.removeRoomId);
             });
-        }
-
-        if (restoreRoomsButton) {
-            restoreRoomsButton.addEventListener("click", handleRestoreDemoRooms);
         }
 
         if (scrollToRoomFormButton && roomFormSection) {

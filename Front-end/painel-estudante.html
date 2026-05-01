@@ -233,7 +233,6 @@
                                             <input
                                                 id="dateFilter"
                                                 type="date"
-                                                value="2026-04-28"
                                                 class="w-full border-0 bg-transparent text-sm font-medium text-slate-700 outline-none"
                                             >
                                         </div>
@@ -387,13 +386,6 @@
                                 >
                                     Limpar reservas
                                 </button>
-                                <button
-                                    id="restoreDemoButton"
-                                    type="button"
-                                    class="rounded-xl border border-slate-300 px-3 py-2 text-xs font-bold uppercase tracking-wide text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
-                                >
-                                    Restaurar demo
-                                </button>
                             </div>
                         </div>
 
@@ -428,69 +420,6 @@
     </main>
 
     <script>
-        const DEFAULT_ROOMS = [
-            {
-                id: "sala-3a",
-                name: "Sala de Estudos 3A",
-                type: "Sala de Estudo",
-                capacity: 4,
-                startTime: "13:00",
-                endTime: "22:00",
-                illustration: "study",
-                status: "ativa"
-            },
-            {
-                id: "bio-2",
-                name: "Laboratorio de Biologia 2",
-                type: "Laboratorio",
-                capacity: 4,
-                startTime: "12:00",
-                endTime: "22:00",
-                illustration: "bio",
-                status: "ativa"
-            },
-            {
-                id: "maker-1",
-                name: "Laboratorio Maker 1",
-                type: "Laboratorio",
-                capacity: 8,
-                startTime: "10:00",
-                endTime: "20:00",
-                illustration: "maker",
-                status: "ativa"
-            },
-            {
-                id: "sala-2b",
-                name: "Sala de Estudos 2B",
-                type: "Sala de Estudo",
-                capacity: 6,
-                startTime: "09:00",
-                endTime: "21:00",
-                illustration: "study-wide",
-                status: "ativa"
-            },
-            {
-                id: "reuniao-1c",
-                name: "Sala de Reuniao 1C",
-                type: "Sala de Estudo",
-                capacity: 8,
-                startTime: "08:00",
-                endTime: "18:00",
-                illustration: "meeting",
-                status: "ativa"
-            },
-            {
-                id: "info-4",
-                name: "Laboratorio de Informatica 4",
-                type: "Laboratorio",
-                capacity: 12,
-                startTime: "07:00",
-                endTime: "19:00",
-                illustration: "informatics",
-                status: "ativa"
-            }
-        ];
-
         const timeOptions = [
             "07:00",
             "08:00",
@@ -587,29 +516,31 @@
         const NOTIFICATIONS_STORAGE_KEY = "roomEasyStudentNotifications";
         const ROOMS_STORAGE_KEY = "roomEasyManagedRooms";
         const PROFESSOR_REQUESTS_KEY = "roomEasyProfessorRequests";
-        const defaultReservations = [
-            {
-                id: "reserva-1",
-                roomId: "sala-3a",
-                roomName: "Sala de Estudo 3A",
-                date: "2026-04-13",
-                time: "22:00"
-            },
-            {
-                id: "reserva-2",
-                roomId: "bio-2",
-                roomName: "Laboratorio de Biologia 2",
-                date: "2026-04-15",
-                time: "14:00"
-            },
-            {
-                id: "reserva-3",
-                roomId: "reuniao-1c",
-                roomName: "Sala de Reuniao 1C",
-                date: "2026-04-18",
-                time: "10:00"
-            }
-        ];
+        const DEMO_ROOM_IDS = new Set([
+            "sala-3a",
+            "bio-2",
+            "maker-1",
+            "sala-2b",
+            "reuniao-1c",
+            "info-4"
+        ]);
+        const DEMO_RESERVATION_IDS = new Set([
+            "reserva-1",
+            "reserva-2",
+            "reserva-3"
+        ]);
+        const DEMO_PROFESSOR_REQUEST_PREFIX = "prof-request-demo-";
+        const DEMO_PROFESSOR_OWNER_KEY = "professor@roomeasy.com";
+        const DEMO_ACCOUNT_EMAILS = new Set([
+            "aluno@roomeasy.com",
+            "professor@roomeasy.com",
+            "admin@roomeasy.com"
+        ]);
+        const DEMO_ACCOUNT_CPFS = new Set([
+            "11111111111",
+            "22222222222",
+            "33333333333"
+        ]);
         let rooms = [];
         let reservations = [];
         let notifications = [];
@@ -650,7 +581,6 @@
         const logoutButton = document.getElementById("logoutButton");
         const clearFiltersButton = document.getElementById("clearFiltersButton");
         const clearReservationsButton = document.getElementById("clearReservationsButton");
-        const restoreDemoButton = document.getElementById("restoreDemoButton");
         const alertsStack = document.getElementById("alertsStack");
         let alerts = [];
         const alertTimeoutIds = new Map();
@@ -659,12 +589,20 @@
             return `${startTime} - ${endTime}`;
         }
 
-        function cloneDefaultReservations() {
-            return defaultReservations.map((reservation) => ({ ...reservation }));
+        function isDemoRoomId(roomId) {
+            return typeof roomId === "string" && DEMO_ROOM_IDS.has(roomId.trim());
         }
 
-        function cloneDefaultRooms() {
-            return DEFAULT_ROOMS.map((room) => ({ ...room }));
+        function isDemoProfessorRequest(value) {
+            const requestId = typeof value?.id === "string" ? value.id.trim() : "";
+            const ownerKey = typeof value?.ownerKey === "string" ? value.ownerKey.trim().toLowerCase() : "";
+            return requestId.startsWith(DEMO_PROFESSOR_REQUEST_PREFIX) || isDemoRoomId(value?.roomId) || ownerKey === DEMO_PROFESSOR_OWNER_KEY;
+        }
+
+        function isDemoSessionUser(user) {
+            const email = typeof user?.email === "string" ? user.email.trim().toLowerCase() : "";
+            const cpf = typeof user?.cpf === "string" ? user.cpf.replace(/\D/g, "") : "";
+            return DEMO_ACCOUNT_EMAILS.has(email) || DEMO_ACCOUNT_CPFS.has(cpf);
         }
 
         function isValidRoomStatus(value) {
@@ -710,24 +648,30 @@
                 const storedRooms = window.localStorage.getItem(ROOMS_STORAGE_KEY);
 
                 if (!storedRooms) {
-                    return cloneDefaultRooms();
+                    return [];
                 }
 
                 const parsedRooms = JSON.parse(storedRooms);
 
                 if (!Array.isArray(parsedRooms)) {
-                    return cloneDefaultRooms();
+                    return [];
                 }
 
-                const validRooms = parsedRooms.filter(isValidRoom).map(sanitizeRoom);
+                const validRooms = parsedRooms
+                    .filter((room) => isValidRoom(room) && !isDemoRoomId(room.id))
+                    .map(sanitizeRoom);
 
                 if (!parsedRooms.length) {
                     return [];
                 }
 
-                return validRooms.length ? validRooms : cloneDefaultRooms();
+                if (validRooms.length !== parsedRooms.length) {
+                    window.localStorage.setItem(ROOMS_STORAGE_KEY, JSON.stringify(validRooms));
+                }
+
+                return validRooms;
             } catch (error) {
-                return cloneDefaultRooms();
+                return [];
             }
         }
 
@@ -742,6 +686,12 @@
                 const parsedStudent = JSON.parse(storedStudent);
 
                 if (!parsedStudent || typeof parsedStudent !== "object") {
+                    return null;
+                }
+
+                if (isDemoSessionUser(parsedStudent)) {
+                    window.localStorage.removeItem(CURRENT_USER_KEY);
+                    window.localStorage.removeItem(LEGACY_CURRENT_STUDENT_KEY);
                     return null;
                 }
 
@@ -817,25 +767,32 @@
                 const storedReservations = window.localStorage.getItem(STORAGE_KEY);
 
                 if (!storedReservations) {
-                    return cloneDefaultReservations();
+                    return [];
                 }
 
                 const parsedReservations = JSON.parse(storedReservations);
 
                 if (!Array.isArray(parsedReservations)) {
-                    return cloneDefaultReservations();
+                    return [];
                 }
 
                 if (!parsedReservations.length) {
                     return [];
                 }
 
-                const validReservations = parsedReservations.filter(isValidReservation);
-                return validReservations.length === parsedReservations.length
-                    ? validReservations
-                    : cloneDefaultReservations();
+                const validReservations = parsedReservations.filter((reservation) => (
+                    isValidReservation(reservation) &&
+                    !DEMO_RESERVATION_IDS.has(reservation.id) &&
+                    !isDemoRoomId(reservation.roomId)
+                ));
+
+                if (validReservations.length !== parsedReservations.length) {
+                    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(validReservations));
+                }
+
+                return validReservations;
             } catch (error) {
-                return cloneDefaultReservations();
+                return [];
             }
         }
 
@@ -949,17 +906,31 @@
                     return [];
                 }
 
-                return parsedRequests
+                const sanitizedRequests = parsedRequests
                     .filter(isValidProfessorRequest)
                     .map(sanitizeProfessorRequest)
-                    .filter((request) => request.status === "confirmada");
+                    .filter((request) => !isDemoProfessorRequest(request));
+
+                if (sanitizedRequests.length !== parsedRequests.length) {
+                    window.localStorage.setItem(PROFESSOR_REQUESTS_KEY, JSON.stringify(sanitizedRequests));
+                }
+
+                return sanitizedRequests.filter((request) => request.status === "confirmada");
             } catch (error) {
                 return [];
             }
         }
 
+        function getTodayDateValue() {
+            const currentDate = new Date();
+            const year = currentDate.getFullYear();
+            const month = String(currentDate.getMonth() + 1).padStart(2, "0");
+            const day = String(currentDate.getDate()).padStart(2, "0");
+            return `${year}-${month}-${day}`;
+        }
+
         function getRequestedDate() {
-            return dateFilter?.value || "2026-04-28";
+            return dateFilter?.value || getTodayDateValue();
         }
 
         function getRequestedTime(room) {
@@ -1755,21 +1726,6 @@
             );
         }
 
-        function restoreDemoReservations() {
-            reservations = cloneDefaultReservations();
-            syncReservationViews();
-            addNotification(
-                "info",
-                "Demo restaurada",
-                "As reservas de exemplo foram restauradas no painel."
-            );
-            showAlert(
-                "success",
-                "Demo restaurada.",
-                "As reservas de exemplo foram restauradas para continuar os testes."
-            );
-        }
-
         function getFilteredRooms() {
             const filters = getCurrentFiltersState();
             const searchTerm = normalizeText(filters.searchTerm);
@@ -1828,6 +1784,9 @@
         professorRequests = loadProfessorRequests();
         populateTimeSelect(startTimeFilter, "", "Horario inicial");
         populateTimeSelect(endTimeFilter, "", "Horario final");
+        if (dateFilter && !dateFilter.value) {
+            dateFilter.value = getTodayDateValue();
+        }
         syncRangesFromSelects();
 
         if (filtersForm) {
@@ -1915,18 +1874,6 @@
                 }
 
                 clearAllReservations();
-            });
-        }
-
-        if (restoreDemoButton) {
-            restoreDemoButton.addEventListener("click", function () {
-                const confirmed = window.confirm("Deseja restaurar as reservas de exemplo do painel?");
-
-                if (!confirmed) {
-                    return;
-                }
-
-                restoreDemoReservations();
             });
         }
 

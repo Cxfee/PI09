@@ -189,29 +189,16 @@
         const ACCOUNTS_STORAGE_KEY = "roomEasyAccounts";
         const LEGACY_REGISTERED_STUDENTS_KEY = "roomEasyRegisteredStudents";
         const FLASH_MESSAGE_KEY = "roomEasyAuthFlashMessage";
-        const DEMO_ACCOUNTS = [
-            {
-                email: "aluno@roomeasy.com",
-                cpf: "11111111111",
-                name: "Ana Lima",
-                password: "123456",
-                role: "aluno"
-            },
-            {
-                email: "professor@roomeasy.com",
-                cpf: "22222222222",
-                name: "Prof. Carlos Souza",
-                password: "123456",
-                role: "professor"
-            },
-            {
-                email: "admin@roomeasy.com",
-                cpf: "33333333333",
-                name: "Admin RoomEasy",
-                password: "123456",
-                role: "admin"
-            }
-        ];
+        const DEMO_ACCOUNT_EMAILS = new Set([
+            "aluno@roomeasy.com",
+            "professor@roomeasy.com",
+            "admin@roomeasy.com"
+        ]);
+        const DEMO_ACCOUNT_CPFS = new Set([
+            "11111111111",
+            "22222222222",
+            "33333333333"
+        ]);
         const signupForm = document.getElementById("signupForm");
         const signupEmailInput = document.getElementById("signupEmail");
         const signupCpfInput = document.getElementById("signupCpf");
@@ -263,26 +250,45 @@
             return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
         }
 
+        function isDemoAccount(student) {
+            const email = typeof student?.email === "string" ? student.email.trim().toLowerCase() : "";
+            const cpf = typeof student?.cpf === "string" ? normalizeCpf(student.cpf) : "";
+            return DEMO_ACCOUNT_EMAILS.has(email) || DEMO_ACCOUNT_CPFS.has(cpf);
+        }
+
         function loadRegisteredStudents() {
             try {
                 const storedAccounts = window.localStorage.getItem(ACCOUNTS_STORAGE_KEY);
+                let parsedStudents = [];
+                let shouldPersistCleanup = false;
 
                 if (storedAccounts) {
                     const parsedAccounts = JSON.parse(storedAccounts);
-                    return Array.isArray(parsedAccounts) ? parsedAccounts : [];
+                    parsedStudents = Array.isArray(parsedAccounts) ? parsedAccounts : [];
+                    shouldPersistCleanup = true;
+                } else {
+                    const legacyStudents = window.localStorage.getItem(LEGACY_REGISTERED_STUDENTS_KEY);
+                    parsedStudents = legacyStudents ? JSON.parse(legacyStudents) : [];
+
+                    if (!Array.isArray(parsedStudents)) {
+                        return [];
+                    }
+
+                    shouldPersistCleanup = parsedStudents.length > 0;
                 }
 
-                const legacyStudents = window.localStorage.getItem(LEGACY_REGISTERED_STUDENTS_KEY);
-                const parsedStudents = legacyStudents ? JSON.parse(legacyStudents) : [];
+                const sanitizedStudents = parsedStudents
+                    .filter((student) => !isDemoAccount(student))
+                    .map((student) => ({
+                        ...student,
+                        role: student.role || "aluno"
+                    }));
 
-                if (!Array.isArray(parsedStudents)) {
-                    return [];
+                if (shouldPersistCleanup && sanitizedStudents.length !== parsedStudents.length) {
+                    saveRegisteredStudents(sanitizedStudents);
                 }
 
-                return parsedStudents.map((student) => ({
-                    ...student,
-                    role: student.role || "aluno"
-                }));
+                return sanitizedStudents;
             } catch (error) {
                 return [];
             }
@@ -298,24 +304,6 @@
             return true;
         }
 
-        function ensureDemoAccounts() {
-            const storedStudents = loadRegisteredStudents();
-            const mergedStudents = [...storedStudents];
-
-            DEMO_ACCOUNTS.forEach((demoAccount) => {
-                const alreadyExists = mergedStudents.some((student) => (
-                    student.email === demoAccount.email || student.cpf === demoAccount.cpf
-                ));
-
-                if (!alreadyExists) {
-                    mergedStudents.push({ ...demoAccount });
-                }
-            });
-
-            saveRegisteredStudents(mergedStudents);
-            return mergedStudents;
-        }
-
         if (togglePasswordButton && passwordInput) {
             togglePasswordButton.addEventListener("click", function () {
                 const isHidden = passwordInput.type === "password";
@@ -325,7 +313,7 @@
             });
         }
 
-        let registeredStudents = ensureDemoAccounts();
+        let registeredStudents = loadRegisteredStudents();
 
         if (signupForm && signupEmailInput && signupCpfInput && signupNameInput && signupRoleInput && passwordInput) {
             signupForm.addEventListener("submit", function (event) {

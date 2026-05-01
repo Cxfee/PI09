@@ -124,22 +124,11 @@
                             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                 <div>
                                     <p class="text-[0.7rem] font-extrabold uppercase tracking-[0.16em] text-brand-600">
-                                        Acessos demo
+                                        Acesso por conta cadastrada
                                     </p>
                                     <p class="mt-1 text-sm text-slate-500">
-                                        Entre rapidinho como aluno, professor ou admin.
+                                        Use um e-mail ou CPF ja cadastrados. Se este navegador ainda nao tem usuarios, crie o primeiro acesso em Cadastre-se.
                                     </p>
-                                </div>
-                                <div class="flex flex-wrap gap-2">
-                                    <button type="button" data-demo-role="aluno" class="demo-login-button rounded-full border border-brand-200 bg-white px-3 py-2 text-xs font-extrabold uppercase tracking-wide text-brand-700 transition hover:border-brand-400 hover:bg-brand-50">
-                                        Aluno
-                                    </button>
-                                    <button type="button" data-demo-role="professor" class="demo-login-button rounded-full border border-brand-200 bg-white px-3 py-2 text-xs font-extrabold uppercase tracking-wide text-brand-700 transition hover:border-brand-400 hover:bg-brand-50">
-                                        Professor
-                                    </button>
-                                    <button type="button" data-demo-role="admin" class="demo-login-button rounded-full border border-brand-200 bg-white px-3 py-2 text-xs font-extrabold uppercase tracking-wide text-brand-700 transition hover:border-brand-400 hover:bg-brand-50">
-                                        Admin
-                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -169,35 +158,21 @@
         const CURRENT_USER_KEY = "roomEasyCurrentUser";
         const LEGACY_CURRENT_STUDENT_KEY = "roomEasyCurrentStudent";
         const FLASH_MESSAGE_KEY = "roomEasyAuthFlashMessage";
-        const DEMO_ACCOUNTS = [
-            {
-                email: "aluno@roomeasy.com",
-                cpf: "11111111111",
-                name: "Ana Lima",
-                password: "123456",
-                role: "aluno"
-            },
-            {
-                email: "professor@roomeasy.com",
-                cpf: "22222222222",
-                name: "Prof. Carlos Souza",
-                password: "123456",
-                role: "professor"
-            },
-            {
-                email: "admin@roomeasy.com",
-                cpf: "33333333333",
-                name: "Admin RoomEasy",
-                password: "123456",
-                role: "admin"
-            }
-        ];
+        const DEMO_ACCOUNT_EMAILS = new Set([
+            "aluno@roomeasy.com",
+            "professor@roomeasy.com",
+            "admin@roomeasy.com"
+        ]);
+        const DEMO_ACCOUNT_CPFS = new Set([
+            "11111111111",
+            "22222222222",
+            "33333333333"
+        ]);
         const loginForm = document.getElementById("loginForm");
         const loginIdentifierInput = document.getElementById("loginIdentifier");
         const togglePasswordButton = document.getElementById("togglePassword");
         const passwordInput = document.getElementById("password");
         const loginFeedback = document.getElementById("loginFeedback");
-        const demoLoginButtons = document.querySelectorAll(".demo-login-button");
         const openEyeIcon = `
             <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z"></path>
@@ -245,26 +220,45 @@
             return isValidEmail(value) || normalizeCpf(value).length === 11;
         }
 
+        function isDemoAccount(student) {
+            const email = typeof student?.email === "string" ? student.email.trim().toLowerCase() : "";
+            const cpf = typeof student?.cpf === "string" ? normalizeCpf(student.cpf) : "";
+            return DEMO_ACCOUNT_EMAILS.has(email) || DEMO_ACCOUNT_CPFS.has(cpf);
+        }
+
         function loadRegisteredStudents() {
             try {
                 const storedAccounts = window.localStorage.getItem(ACCOUNTS_STORAGE_KEY);
+                let parsedStudents = [];
+                let shouldPersistCleanup = false;
 
                 if (storedAccounts) {
                     const parsedAccounts = JSON.parse(storedAccounts);
-                    return Array.isArray(parsedAccounts) ? parsedAccounts : [];
+                    parsedStudents = Array.isArray(parsedAccounts) ? parsedAccounts : [];
+                    shouldPersistCleanup = true;
+                } else {
+                    const legacyStudents = window.localStorage.getItem(LEGACY_REGISTERED_STUDENTS_KEY);
+                    parsedStudents = legacyStudents ? JSON.parse(legacyStudents) : [];
+
+                    if (!Array.isArray(parsedStudents)) {
+                        return [];
+                    }
+
+                    shouldPersistCleanup = parsedStudents.length > 0;
                 }
 
-                const legacyStudents = window.localStorage.getItem(LEGACY_REGISTERED_STUDENTS_KEY);
-                const parsedStudents = legacyStudents ? JSON.parse(legacyStudents) : [];
+                const sanitizedStudents = parsedStudents
+                    .filter((student) => !isDemoAccount(student))
+                    .map((student) => ({
+                        ...student,
+                        role: student.role || "aluno"
+                    }));
 
-                if (!Array.isArray(parsedStudents)) {
-                    return [];
+                if (shouldPersistCleanup && sanitizedStudents.length !== parsedStudents.length) {
+                    saveRegisteredStudents(sanitizedStudents);
                 }
 
-                return parsedStudents.map((student) => ({
-                    ...student,
-                    role: student.role || "aluno"
-                }));
+                return sanitizedStudents;
             } catch (error) {
                 return [];
             }
@@ -278,23 +272,6 @@
             }
 
             return students;
-        }
-
-        function ensureDemoAccounts() {
-            const storedStudents = loadRegisteredStudents();
-            const mergedStudents = [...storedStudents];
-
-            DEMO_ACCOUNTS.forEach((demoAccount) => {
-                const alreadyExists = mergedStudents.some((student) => (
-                    student.email === demoAccount.email || student.cpf === demoAccount.cpf
-                ));
-
-                if (!alreadyExists) {
-                    mergedStudents.push({ ...demoAccount });
-                }
-            });
-
-            return saveRegisteredStudents(mergedStudents);
         }
 
         function getDashboardPath(role) {
@@ -316,15 +293,6 @@
             } catch (error) {
                 return;
             }
-        }
-
-        function getFallbackName(identifier) {
-            if (isValidEmail(identifier)) {
-                const localPart = identifier.split("@")[0].replace(/[._-]+/g, " ").trim();
-                return localPart ? localPart.replace(/\b\w/g, (letter) => letter.toUpperCase()) : "Aluna";
-            }
-
-            return "Aluna";
         }
 
         function consumeFlashMessage() {
@@ -351,14 +319,13 @@
             });
         }
 
-        const registeredStudents = ensureDemoAccounts();
-
         if (loginForm && loginIdentifierInput && passwordInput) {
             loginForm.addEventListener("submit", function (event) {
                 event.preventDefault();
 
                 const identifier = loginIdentifierInput.value.trim();
                 const password = passwordInput.value.trim();
+                const registeredStudents = loadRegisteredStudents();
 
                 if (!identifier || !password) {
                     showLoginFeedback("error", "Preencha seu e-mail ou CPF e tambem a senha.");
@@ -375,38 +342,31 @@
                     return;
                 }
 
-                if (registeredStudents.length) {
-                    const normalizedIdentifier = identifier.toLowerCase();
-                    const normalizedCpf = normalizeCpf(identifier);
-                    const matchedStudent = registeredStudents.find((student) => (
-                        student.email === normalizedIdentifier ||
-                        student.cpf === normalizedCpf
-                    ));
-
-                    if (!matchedStudent || matchedStudent.password !== password) {
-                        showLoginFeedback("error", "Nao encontramos uma conta com esses dados. Confira e tente novamente.");
-                        return;
-                    }
-
-                    saveCurrentStudent({
-                        name: matchedStudent.name,
-                        email: matchedStudent.email,
-                        cpf: matchedStudent.cpf,
-                        role: matchedStudent.role || "aluno"
-                    });
-
-                    window.location.href = getDashboardPath(matchedStudent.role || "aluno");
+                if (!registeredStudents.length) {
+                    showLoginFeedback("error", "Nenhuma conta cadastrada foi encontrada neste navegador. Use Cadastre-se para criar o primeiro acesso.");
                     return;
-                } else {
-                    saveCurrentStudent({
-                        name: getFallbackName(identifier),
-                        email: isValidEmail(identifier) ? identifier.toLowerCase() : "",
-                        cpf: normalizeCpf(identifier),
-                        role: "aluno"
-                    });
                 }
 
-                window.location.href = getDashboardPath("aluno");
+                const normalizedIdentifier = identifier.toLowerCase();
+                const normalizedCpf = normalizeCpf(identifier);
+                const matchedStudent = registeredStudents.find((student) => (
+                    student.email === normalizedIdentifier ||
+                    student.cpf === normalizedCpf
+                ));
+
+                if (!matchedStudent || matchedStudent.password !== password) {
+                    showLoginFeedback("error", "Nao encontramos uma conta com esses dados. Confira e tente novamente.");
+                    return;
+                }
+
+                saveCurrentStudent({
+                    name: matchedStudent.name,
+                    email: matchedStudent.email,
+                    cpf: matchedStudent.cpf,
+                    role: matchedStudent.role || "aluno"
+                });
+
+                window.location.href = getDashboardPath(matchedStudent.role || "aluno");
             });
         }
 
@@ -414,27 +374,6 @@
             if (field) {
                 field.addEventListener("input", hideLoginFeedback);
             }
-        });
-
-        demoLoginButtons.forEach((button) => {
-            button.addEventListener("click", function () {
-                const targetRole = button.dataset.demoRole;
-                const demoAccount = registeredStudents.find((student) => student.role === targetRole);
-
-                if (!demoAccount) {
-                    showLoginFeedback("error", "Nao foi possivel localizar a conta demo deste perfil.");
-                    return;
-                }
-
-                saveCurrentStudent({
-                    name: demoAccount.name,
-                    email: demoAccount.email,
-                    cpf: demoAccount.cpf,
-                    role: demoAccount.role
-                });
-
-                window.location.href = getDashboardPath(demoAccount.role);
-            });
         });
 
         consumeFlashMessage();

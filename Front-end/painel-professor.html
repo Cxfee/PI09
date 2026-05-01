@@ -248,13 +248,6 @@
                                     Criar nova solicitacao
                                 </button>
                                 <button
-                                    id="restoreTeacherDemoButton"
-                                    type="button"
-                                    class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-sm font-bold text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
-                                >
-                                    Restaurar demo do professor
-                                </button>
-                                <button
                                     id="clearTeacherRequestsButton"
                                     type="button"
                                     class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-sm font-bold text-slate-700 transition hover:border-rose-300 hover:text-rose-600"
@@ -280,68 +273,26 @@
         const STUDENT_RESERVATIONS_KEY = "roomEasyStudentReservations";
         const ROOMS_STORAGE_KEY = "roomEasyManagedRooms";
         const PROFESSOR_REQUESTS_KEY = "roomEasyProfessorRequests";
-        const DEFAULT_ROOMS = [
-            {
-                id: "sala-3a",
-                name: "Sala de Estudos 3A",
-                type: "Sala de Estudo",
-                capacity: 4,
-                startTime: "13:00",
-                endTime: "22:00",
-                illustration: "study",
-                status: "ativa"
-            },
-            {
-                id: "bio-2",
-                name: "Laboratorio de Biologia 2",
-                type: "Laboratorio",
-                capacity: 4,
-                startTime: "12:00",
-                endTime: "22:00",
-                illustration: "bio",
-                status: "ativa"
-            },
-            {
-                id: "maker-1",
-                name: "Laboratorio Maker 1",
-                type: "Laboratorio",
-                capacity: 8,
-                startTime: "10:00",
-                endTime: "20:00",
-                illustration: "maker",
-                status: "ativa"
-            },
-            {
-                id: "sala-2b",
-                name: "Sala de Estudos 2B",
-                type: "Sala de Estudo",
-                capacity: 6,
-                startTime: "09:00",
-                endTime: "21:00",
-                illustration: "study-wide",
-                status: "ativa"
-            },
-            {
-                id: "reuniao-1c",
-                name: "Sala de Reuniao 1C",
-                type: "Sala de Estudo",
-                capacity: 8,
-                startTime: "08:00",
-                endTime: "18:00",
-                illustration: "meeting",
-                status: "ativa"
-            },
-            {
-                id: "info-4",
-                name: "Laboratorio de Informatica 4",
-                type: "Laboratorio",
-                capacity: 12,
-                startTime: "07:00",
-                endTime: "19:00",
-                illustration: "informatics",
-                status: "ativa"
-            }
-        ];
+        const DEMO_ROOM_IDS = new Set([
+            "sala-3a",
+            "bio-2",
+            "maker-1",
+            "sala-2b",
+            "reuniao-1c",
+            "info-4"
+        ]);
+        const DEMO_PROFESSOR_REQUEST_PREFIX = "prof-request-demo-";
+        const DEMO_PROFESSOR_OWNER_KEY = "professor@roomeasy.com";
+        const DEMO_ACCOUNT_EMAILS = new Set([
+            "aluno@roomeasy.com",
+            "professor@roomeasy.com",
+            "admin@roomeasy.com"
+        ]);
+        const DEMO_ACCOUNT_CPFS = new Set([
+            "11111111111",
+            "22222222222",
+            "33333333333"
+        ]);
         const timeOptions = [
             "07:00",
             "08:00",
@@ -383,7 +334,6 @@
         const requestStartTimeInput = document.getElementById("requestStartTimeInput");
         const requestEndTimeInput = document.getElementById("requestEndTimeInput");
         const newRequestButton = document.getElementById("newRequestButton");
-        const restoreTeacherDemoButton = document.getElementById("restoreTeacherDemoButton");
         const clearTeacherRequestsButton = document.getElementById("clearTeacherRequestsButton");
         const requestStatusList = document.getElementById("requestStatusList");
         let currentUser = null;
@@ -392,10 +342,33 @@
         let allProfessorRequests = [];
         let teacherRequests = [];
 
+        function isDemoSessionUser(user) {
+            const email = typeof user?.email === "string" ? user.email.trim().toLowerCase() : "";
+            const cpf = typeof user?.cpf === "string" ? user.cpf.replace(/\D/g, "") : "";
+            return DEMO_ACCOUNT_EMAILS.has(email) || DEMO_ACCOUNT_CPFS.has(cpf);
+        }
+
         function loadCurrentUser() {
             try {
                 const storedUser = window.localStorage.getItem(CURRENT_USER_KEY) || window.localStorage.getItem(LEGACY_CURRENT_STUDENT_KEY);
-                return storedUser ? JSON.parse(storedUser) : null;
+
+                if (!storedUser) {
+                    return null;
+                }
+
+                const parsedUser = JSON.parse(storedUser);
+
+                if (!parsedUser || typeof parsedUser !== "object") {
+                    return null;
+                }
+
+                if (isDemoSessionUser(parsedUser)) {
+                    window.localStorage.removeItem(CURRENT_USER_KEY);
+                    window.localStorage.removeItem(LEGACY_CURRENT_STUDENT_KEY);
+                    return null;
+                }
+
+                return parsedUser;
             } catch (error) {
                 return null;
             }
@@ -447,7 +420,7 @@
                 return user.name.trim().toLowerCase();
             }
 
-            return "professor-demo";
+            return "professor";
         }
 
         function updateTeacherUI(user) {
@@ -479,8 +452,14 @@
             window.location.href = "./index.html";
         }
 
-        function cloneDefaultRooms() {
-            return DEFAULT_ROOMS.map((room) => ({ ...room }));
+        function isDemoRoomId(roomId) {
+            return typeof roomId === "string" && DEMO_ROOM_IDS.has(roomId.trim());
+        }
+
+        function isDemoProfessorRequest(value) {
+            const requestId = typeof value?.id === "string" ? value.id.trim() : "";
+            const ownerKey = typeof value?.ownerKey === "string" ? value.ownerKey.trim().toLowerCase() : "";
+            return requestId.startsWith(DEMO_PROFESSOR_REQUEST_PREFIX) || isDemoRoomId(value?.roomId) || ownerKey === DEMO_PROFESSOR_OWNER_KEY;
         }
 
         function isValidRoomStatus(value) {
@@ -526,23 +505,30 @@
                 const storedRooms = window.localStorage.getItem(ROOMS_STORAGE_KEY);
 
                 if (!storedRooms) {
-                    return cloneDefaultRooms();
+                    return [];
                 }
 
                 const parsedRooms = JSON.parse(storedRooms);
 
                 if (!Array.isArray(parsedRooms)) {
-                    return cloneDefaultRooms();
+                    return [];
                 }
 
                 if (!parsedRooms.length) {
                     return [];
                 }
 
-                const validRooms = parsedRooms.filter(isValidRoom).map(sanitizeRoom);
-                return validRooms.length ? validRooms : cloneDefaultRooms();
+                const validRooms = parsedRooms
+                    .filter((room) => isValidRoom(room) && !isDemoRoomId(room.id))
+                    .map(sanitizeRoom);
+
+                if (validRooms.length !== parsedRooms.length) {
+                    window.localStorage.setItem(ROOMS_STORAGE_KEY, JSON.stringify(validRooms));
+                }
+
+                return validRooms;
             } catch (error) {
-                return cloneDefaultRooms();
+                return [];
             }
         }
 
@@ -550,7 +536,27 @@
             try {
                 const storedReservations = window.localStorage.getItem(STUDENT_RESERVATIONS_KEY);
                 const parsedReservations = storedReservations ? JSON.parse(storedReservations) : [];
-                return Array.isArray(parsedReservations) ? parsedReservations : [];
+
+                if (!Array.isArray(parsedReservations)) {
+                    return [];
+                }
+
+                const safeReservations = parsedReservations.filter((reservation) => (
+                    reservation &&
+                    typeof reservation.id === "string" &&
+                    typeof reservation.roomId === "string" &&
+                    typeof reservation.roomName === "string" &&
+                    typeof reservation.date === "string" &&
+                    typeof reservation.time === "string" &&
+                    !isDemoRoomId(reservation.roomId) &&
+                    !["reserva-1", "reserva-2", "reserva-3"].includes(reservation.id)
+                ));
+
+                if (safeReservations.length !== parsedReservations.length) {
+                    window.localStorage.setItem(STUDENT_RESERVATIONS_KEY, JSON.stringify(safeReservations));
+                }
+
+                return safeReservations;
             } catch (error) {
                 return [];
             }
@@ -562,68 +568,6 @@
             const month = String(currentDate.getMonth() + 1).padStart(2, "0");
             const day = String(currentDate.getDate()).padStart(2, "0");
             return `${year}-${month}-${day}`;
-        }
-
-        function addDaysToDate(dateValue, amount) {
-            const baseDate = new Date(`${dateValue}T00:00:00`);
-            baseDate.setDate(baseDate.getDate() + amount);
-            const year = baseDate.getFullYear();
-            const month = String(baseDate.getMonth() + 1).padStart(2, "0");
-            const day = String(baseDate.getDate()).padStart(2, "0");
-            return `${year}-${month}-${day}`;
-        }
-
-        function buildDemoRequestsForOwner(ownerKey, teacherDisplayName) {
-            const today = getTodayDateValue();
-
-            return [
-                {
-                    id: `prof-request-demo-1-${ownerKey.replace(/[^a-z0-9]/gi, "")}`,
-                    ownerKey,
-                    teacherName: teacherDisplayName,
-                    roomId: "bio-2",
-                    roomName: "Laboratorio de Biologia 2",
-                    className: "Bioquimica I",
-                    purpose: "Aula pratica",
-                    date: today,
-                    startTime: "08:00",
-                    endTime: "10:00",
-                    status: "confirmada",
-                    createdAt: Date.now() - 300000
-                },
-                {
-                    id: `prof-request-demo-2-${ownerKey.replace(/[^a-z0-9]/gi, "")}`,
-                    ownerKey,
-                    teacherName: teacherDisplayName,
-                    roomId: "sala-3a",
-                    roomName: "Sala de Estudos 3A",
-                    className: "Monitoria",
-                    purpose: "Revisao de conteudo",
-                    date: addDaysToDate(today, 1),
-                    startTime: "14:00",
-                    endTime: "16:00",
-                    status: "confirmada",
-                    createdAt: Date.now() - 240000
-                },
-                {
-                    id: `prof-request-demo-3-${ownerKey.replace(/[^a-z0-9]/gi, "")}`,
-                    ownerKey,
-                    teacherName: teacherDisplayName,
-                    roomId: "info-4",
-                    roomName: "Laboratorio de Informatica 4",
-                    className: "Algoritmos",
-                    purpose: "Atividade orientada",
-                    date: addDaysToDate(today, 2),
-                    startTime: "19:00",
-                    endTime: "21:00",
-                    status: "em-analise",
-                    createdAt: Date.now() - 120000
-                }
-            ];
-        }
-
-        function cloneDefaultProfessorRequests() {
-            return buildDemoRequestsForOwner("professor@roomeasy.com", "Prof. Carlos Souza").map((request) => ({ ...request }));
         }
 
         function isValidRequestStatus(value) {
@@ -680,29 +624,40 @@
                 const storedRequests = window.localStorage.getItem(PROFESSOR_REQUESTS_KEY);
 
                 if (!storedRequests) {
-                    return saveAllProfessorRequests(cloneDefaultProfessorRequests());
+                    return [];
                 }
 
                 const parsedRequests = JSON.parse(storedRequests);
 
                 if (!Array.isArray(parsedRequests)) {
-                    return saveAllProfessorRequests(cloneDefaultProfessorRequests());
+                    return [];
                 }
 
                 if (!parsedRequests.length) {
                     return [];
                 }
 
-                const validRequests = parsedRequests.filter(isValidRequest).map(sanitizeRequest);
-                return validRequests.length ? validRequests : saveAllProfessorRequests(cloneDefaultProfessorRequests());
+                const validRequests = parsedRequests
+                    .filter(isValidRequest)
+                    .map(sanitizeRequest)
+                    .filter((request) => !isDemoProfessorRequest(request));
+
+                if (validRequests.length !== parsedRequests.length) {
+                    return saveAllProfessorRequests(validRequests);
+                }
+
+                return validRequests;
             } catch (error) {
-                return saveAllProfessorRequests(cloneDefaultProfessorRequests());
+                return [];
             }
         }
 
         function saveAllProfessorRequests(nextRequests) {
             const safeRequests = Array.isArray(nextRequests)
-                ? nextRequests.filter(isValidRequest).map(sanitizeRequest)
+                ? nextRequests
+                    .filter(isValidRequest)
+                    .map(sanitizeRequest)
+                    .filter((request) => !isDemoProfessorRequest(request))
                 : [];
 
             allProfessorRequests = safeRequests;
@@ -1179,23 +1134,6 @@
             );
         }
 
-        function handleRestoreTeacherDemo() {
-            const confirmed = window.confirm("Deseja restaurar as solicitacoes demo deste professor?");
-
-            if (!confirmed) {
-                return;
-            }
-
-            const ownerKey = getTeacherOwnerKey(currentUser);
-            const teacherDisplayName = getDisplayName(currentUser);
-            const remainingRequests = allProfessorRequests.filter((request) => request.ownerKey !== ownerKey);
-            const demoRequests = buildDemoRequestsForOwner(ownerKey, teacherDisplayName);
-
-            saveAllProfessorRequests([...demoRequests, ...remainingRequests]);
-            syncProfessorDashboard();
-            showFeedback("success", "Demo restaurada", "As solicitacoes de exemplo do professor foram restauradas.");
-        }
-
         function handleClearTeacherRequests() {
             if (!teacherRequests.length) {
                 showFeedback("error", "Nada para limpar", "Este professor ainda nao possui solicitacoes salvas.");
@@ -1254,10 +1192,6 @@
                 requestFormSection.scrollIntoView({ behavior: "smooth", block: "start" });
                 roomSelect?.focus();
             });
-        }
-
-        if (restoreTeacherDemoButton) {
-            restoreTeacherDemoButton.addEventListener("click", handleRestoreTeacherDemo);
         }
 
         if (clearTeacherRequestsButton) {
