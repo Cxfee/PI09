@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RoomEasy | Estudante</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: "#f4f7ff",
+                            100: "#e7eeff",
+                            200: "#cfdcff",
+                            300: "#a9c1ff",
+                            400: "#789bff",
+                            500: "#4f73ff",
+                            600: "#3557eb",
+                            700: "#1e3aa8",
+                            800: "#162a78"
+                        }
+                    },
+                    boxShadow: {
+                        panel: "0 30px 80px rgba(30, 58, 168, 0.14)",
+                        field: "0 10px 30px rgba(15, 23, 42, 0.08)"
+                    }
+                }
+            }
+        };
+    </script>
+    <style type="text/tailwindcss">
+        @layer base {
+            body {
+                font-family: "Plus Jakarta Sans", sans-serif;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-100 text-slate-900">
+    <main class="mx-auto max-w-7xl px-4 py-6">
+        <header class="flex flex-wrap items-center justify-between gap-4 rounded-3xl bg-white p-5 shadow-panel">
+            <div><h1 class="text-2xl font-extrabold text-brand-700">RoomEasy | Painel do estudante</h1>
+                <p id="studentName" class="text-slate-500"></p>
+            </div>
+                <button onclick="logout()" class="inline-flex h-11 items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 transition hover:border-rose-200 hover:text-rose-600">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <path d="m16 17 5-5-5-5"></path>
+                        <path d="M21 12H9"></path>
+                </svg>
+                <span class="hidden sm:inline">Sair</span>
+            </button>
+        </header>
+        <section class="mt-6 rounded-3xl bg-white p-5 shadow-field">
+            <h2 class="text-2xl font-extrabold">Encontre uma sala de estudo ou laboratório</h2>
+            <form id="filtersForm" class="mt-4 grid gap-3 md:grid-cols-5"><input id="dateFilter" type="date" class="input">
+            <select id="startTimeFilter" class="input"></select>
+            <select id="roomTypeFilter" class="input">
+                <option value="Todos">Todos</option>
+                <option value="Sala de Estudo">Sala de Estudo</option>
+                <option value="Laboratorio">Laboratorio</option>
+                </select>
+                <select id="capacityFilter" class="input">
+                    <option value="0">Qualquer capacidade</option>
+                    <option value="4">Min. 4</option>
+                    <option value="6">Min. 6</option>
+                    <option value="8">Min. 8</option>
+                    <option value="12">Min. 12</option>
+                    </select>
+                    <button class="btn">Filtrar</button>
+                    </form></section>
+                    <section class="mt-6 grid gap-6 lg:grid-cols-[1.4fr_.6fr]">
+                        <div class="box">
+                            <h2>Salas disponíveis</h2>
+                        <div id="roomsGrid" class="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3"></div>
+                        </div>
+                        <aside class="box">
+                            <h2>Minhas reservas</h2>
+                            <div id="reservationsList" class="mt-4 space-y-3"></div>
+                        </aside>
+                    </section>
+                        <div id="toast" class="fixed right-4 top-4 hidden rounded-2xl border px-5 py-4 text-sm font-bold shadow-lg"></div>
+                </main>
+       <style>.box{
+        border-radius:24px;
+        background:white;
+        padding:20px;
+        box-shadow:0 10px 30px rgba(15,23,42,.08)}.box h2
+        {
+            font-size:1.35rem;
+            font-weight:800}.input
+            {
+                width:100%;
+                border:1px solid #e2e8f0;
+                border-radius:16px;
+                padding:12px;
+                background:#f8fafc;
+                outline:none}.btn
+            {
+                border-radius:16px;
+                background:#3557eb;color:white;
+                padding:12px;
+                font-weight:800}.badge
+            {
+                border-radius:999px;
+                padding:4px 10px;
+                font-size:.7rem;
+                font-weight:800;
+                text-transform:uppercase
+    }
+    </style>
+                    
+    <script>
+        const $=id=>document.getElementById(id);const api='../api/';
+        const times=['07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00',
+            '16:00','17:00','18:00','19:00','20:00','21:00','22:00'];
+        let salas=[],reservas=[],solicitacoes=[],current=null;
+        function user(){return JSON.parse(localStorage.getItem('roomEasyCurrentUser')||'null')}
+        function logout(){
+            localStorage.removeItem('roomEasyCurrentUser');
+            location.href='../index.html'
+        }
+        function today(){return new Date().toISOString().slice(0,10)}
+        function add1(t){let [h,m]=t.split(':').map(Number);h++;return String(Math.min(h,23)).padStart(2,'0')+':'+String(m).padStart(2,'0')}
+        function toast(ok,msg){const e=$('toast');
+            e.className=`fixed right-4 top-4 rounded-2xl border px-5 py-4 text-sm font-bold shadow-lg 
+                ${ok?'border-emerald-200 bg-emerald-50 text-emerald-700':'border-rose-200 bg-rose-50 text-rose-700'}`;
+            e.textContent=msg;
+            e.classList.remove('hidden');
+            setTimeout(()=>e.classList.add('hidden'),4000)
+        }
+
+        async function getJson(url){const r=await fetch(url);
+        return r.json()}
+        async function post(url,data){const r=await fetch(url,{method:'POST',
+            headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+            return r.json()}
+            
+        async function carregar(){
+            current=user();
+            if(!current){location.href='../index.html';
+                return
+            }
+            if(current.role!=='aluno'){
+                alert('Acesso permitido apenas para estudante.');
+                location.href='../index.html';
+                return
+            }
+            $('studentName').textContent=current.name||current.email;
+            $('dateFilter').value=$('dateFilter').value||today();
+            $('startTimeFilter').innerHTML=times.map(t=>`<option value="${t}">${t}</option>`).join('');
+            [salas,reservas,solicitacoes]=await Promise.all([getJson(api+'listar_salas.php?ativas=1').then(j=>j.salas||[]),
+            getJson(api+'listar_reservas.php?email='+encodeURIComponent(current.email)).then(j=>j.reservas||[]),
+            getJson(api+'listar_solicitacoes_professor.php').then(j=>(j.solicitacoes||[]).filter(s=>s.status_solicitacao==='confirmada'))]);
+            render()
+        }
+
+        function conflitProf(salaId,data,hora){
+            const min=t=>{let [h,m]=t.split(':').map(Number);
+                return h*60+m};
+            return solicitacoes.find(s=>s.sala_id===salaId&&s.data_solicitacao===data&&min(hora)>=min(s.hora_inicio)&&min(hora)<min(s.hora_fim))
+        }
+            
+        function render(){
+            const tipo=$('roomTypeFilter').value, cap=Number($('capacityFilter').value), data=$('dateFilter').value, 
+                hora=$('startTimeFilter').value;let lista=salas.filter(s=>(tipo==='Todos'||s.tipo===tipo)&&Number(s.capacidade)>=cap&&hora>=s.hora_inicio&&add1(hora)<=s.hora_fim);
+                $('roomsGrid').innerHTML=lista.length?lista.map(s=>{const ja=reservas.find(r=>r.sala_id===s.id&&r.data_reserva===data&&r.hora_inicio===hora);
+            const mesmaHora=reservas.find(r=>r.data_reserva===data&&r.hora_inicio===hora);
+            const prof=conflitProf(s.id,data,hora);
+            const disabled=ja||mesmaHora||prof;
+            return `<article class="rounded-3xl border bg-white p-4 shadow-sm">
+                    <div class="h-24 rounded-2xl bg-gradient-to-br from-brand-50 to-slate-100"></div>
+                    <h3 class="mt-3 font-extrabold">${s.nome}</h3><p>Tipo: ${s.tipo}</p><p>Capacidade: ${s.capacidade}</p>
+                    <p>Horário da sala: ${s.hora_inicio} - ${s.hora_fim}</p>
+                    ${prof?`<p class="mt-2 rounded-xl bg-amber-50 p-2 text-xs font-bold text-amber-700">Reservado para aula: 
+                    ${prof.turma_atividade}</p>`:''}
+                    ${mesmaHora&&!ja?`<p class="mt-2 rounded-xl bg-rose-50 p-2 text-xs font-bold text-rose-700">Você já tem reserva nesse horário.</p>`:''}
+                    <button ${disabled?'disabled':''} onclick="reservar('${s.id}')" class="mt-3 w-full rounded-xl px-4 py-3 font-bold ${disabled?'bg-slate-200 text-slate-500':'bg-brand-600 text-white hover:bg-brand-700'}">
+                    ${ja?'Reservado':disabled?'Indisponível':'Reservar agora'}</button>
+            </article>`}).join(''):'<p class="text-slate-500">Nenhuma sala ativa encontrada.</p>';
+            $('reservationsList').innerHTML=reservas.length?reservas.map(r=>`<article class="rounded-2xl bg-slate-50 p-4"><b>${r.sala_nome}</b>
+                <p>${r.data_reserva} às ${r.hora_inicio}</p>
+                <button onclick="cancelar(${r.id})" class="mt-2 font-bold text-rose-600">Cancelar</button>
+            </article>`).join(''):'<p class="text-slate-500">Você ainda não fez reservas.</p>'
+    }
+        $('filtersForm').addEventListener('submit',e=>{e.preventDefault();render()});
+
+        async function reservar(id){
+            const data={email_usuario:current.email,sala_id:id,data_reserva:$('dateFilter').value,hora_inicio:$('startTimeFilter').value,hora_fim:add1($('startTimeFilter').value)};
+            const j=await post(api+'criar_reserva.php',data);
+            toast(j.sucesso,j.mensagem);
+            await carregar()
+            }
+        async function cancelar(id){if(confirm('Cancelar reserva?')){
+            const j=await post(api+'cancelar_reserva.php',{id});
+            toast(j.sucesso,j.mensagem);
+            await carregar()
+        }
+    }
+    carregar();
+    </script>
+
+</body>
+</html>
